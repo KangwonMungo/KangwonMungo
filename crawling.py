@@ -1,9 +1,58 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from bs4 import BeautifulSoup
+import requests
 import time
 import pandas as pd
 
-TIME = 3
+TIME = 2
+
+def get_introduction(isbn):
+  url = f'https://www.aladin.co.kr/shop/product/getContents.aspx?ISBN={isbn}&name=Introduce&type=0&date=0'
+  headers = {
+    "Referer": f"https://www.aladin.co.kr/shop/wproduct.aspx?ItemId={isbn}",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
+  }
+
+  try:
+    response = requests.get(url, headers=headers, timeout=10)
+    soup = BeautifulSoup(response.text, "lxml")
+
+    introduce_div = soup.find("div", {"class": "Ere_prod_mconts_LS"}, string="책소개")
+    introduce_content = None
+
+    if introduce_div:
+      parent_div = introduce_div.find_parent("div", {"class": "Ere_prod_mconts_box"})
+
+      if parent_div:
+        introduce_content_div = parent_div.find("div", {"class": "Ere_prod_mconts_R"})
+        content_text = [] # 도서 소개 
+
+        if introduce_content_div:
+          for element in introduce_content_div.children:
+            if element.name =="div" and "Ere_line2" in element.get("class", []):
+              break
+            if isinstance(element, str):
+              content_text.append(element.strip())
+            elif element.name == "br":
+              content_text.append("\n")  
+
+          introduce_content = "".join(content_text).strip() # 하나의 문자열로 결합 후, 앞뒤 공백 제거
+          introduce_content = "\n".join([line.strip() for line in introduce_content.splitlines() if line.strip()])
+
+    if introduce_content:  
+      print(introduce_content)
+    else:
+      print("책 소개 내용을 찾을 수 없습니다")
+
+    return introduce_content
+  
+  except requests.exceptions.HTTPError:
+    print(f"Http Error")
+  except requests.exceptions.Timeout:
+    print(f"Timeout Error")  
+  except Exception as e:
+    print(type(e))
 
 
 # 알라딘 크롤링
@@ -29,19 +78,36 @@ def crawl_aladin(page_num):
         author_element = book.find_element(By.XPATH, './/div[@class="ss_book_list"]/ul/li[2]/a')
       data["author"] = author_element.text  
       
-      keyword_element = book.find_elements(By.CLASS_NAME, "ss_f_g2") # 도서 키워드 없을 수도, 여러개일 수도 있음
-      data["keyword"] = [keyword.text for keyword in keyword_element] 
+      keyword_elements = book.find_elements(By.CLASS_NAME, "ss_f_g2") # 도서 키워드 없을 수도, 여러개일 수도 있음
+      keywords = [keyword.text.replace('-', '').strip() for keyword in keyword_elements] # 전처리
+      data["keyword"] = keywords
       
-      # 상세 페이지 접근(도서 소개, 장르를 얻기 위해서서)
+      # 상세 페이지 접근(도서 소개, 장르를 얻기 위해서)
       title_element.click()
       time.sleep(TIME)
 
-      genre_element = driver.find_elements(By.XPATH, '//*[@id="ulCategory"]/li[*]/a') # 도서 장르 여러개일 수 있음
-      data["genre"] = [genre.text for genre in genre_element] 
-      
+      isbn_element = driver.find_element(By.XPATH, '//meta[@property="books:isbn"]')
+      isbn = isbn_element.get_attribute('content') # ISBN
+      data["isbn"] = isbn
+
+      if data["isbn"]:
+        introduction = get_introduction(data["isbn"]) # 도서 소개
+        data["introduction"] = introduction
+
+      genre_elements = driver.find_elements(By.XPATH, '//*[@id="ulCategory"]/li[*]/a') # 도서 장르 여러개일 수 있음
+      genres = [genre.text.strip() for genre in genre_elements]
+      processed_genres = []
+
+      for genre in genres:
+        split_genres = [content.strip() for content in genre.split('/')] # '/'로 나누고 앞뒤 공백 제거
+        split_genres = [content for content in split_genres if content] # 빈 문자열 제거
+        processed_genres.extend(split_genres)
+
+      data["genre"] = list(set(processed_genres)) # 중복 제거
+
       all_data.append(data)
       
-      driver.back()
+      driver.back() # 베스트셀러 목록으로 돌아가기
       time.sleep(TIME)
 
     if page < page_num:
@@ -50,7 +116,7 @@ def crawl_aladin(page_num):
         driver.find_element(By.XPATH, next_page_xpath).click() # 다음 페이지로 이동
         time.sleep(TIME) # 페이지 로딩
       except Exception as e:
-        print(f"다음 페이지로 이동 실패 {e}")
+        print(f"다음 페이지로 이동 실패 : {type(e)}")
     
   driver.quit()
 
@@ -58,4 +124,4 @@ def crawl_aladin(page_num):
   df.to_csv("aladin_bestseller.csv", encoding="utf-8-sig", index=False) # dataframe을 csv 파일로 변환
 
 if __name__ == "__main__":
-  crawl_aladin(2)  
+  crawl_aladin(4)  
