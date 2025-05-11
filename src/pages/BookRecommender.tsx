@@ -1,5 +1,3 @@
-// 📁 src/pages/BookRecommender.tsx (챗봇형 말풍선 UI로 리팩토링)
-
 import { useState } from "react";
 import "../BookRecommender.css";
 
@@ -18,51 +16,49 @@ export default function BookRecommender() {
     const userMessage: ChatMessage = { sender: "user", text: question };
     setMessages((prev) => [...prev, userMessage]);
 
-    // 가짜 추천 결과
-    const recommendationText = `해리포터 시리즈를 재미있게 보셨다니, 혹시 다음과 같은 요소들이 담긴 책을을
-    찾으 시는 걸까요?
-    
-    * 장르: 판타지, 영 어덜트, 모험, 학교/기숙학교, 성장, 미스터리
-    * 줄거리 특징: 숨겨진 마법 세계, 특별한 운명을 가진 주인공의 성장, 마법 학
-      교 생활, 선과 악의 대결, 친구들과의 우정과 동료애
-    * 매력 포인트: 매력적인 세계관, 주인공의 성장, 짜임새 있는 이야기, 유머와
-      감동
+    const botResponse = `감동적인 성장 소설이라면 이런 책들을 추천드려요:
 
-     좀 더 중요하게 생각하시는 요소가 있으시거나, 다른 '이런 느낌'을 표현하는
-     단어가 있다면 알려주세요!`
-    ; 
+1. 아몬드 - 감정을 배우는 소년의 성장 이야기
+2. 소년이 온다 - 상실과 기억을 다룬 깊이 있는 이야기
+3. 나미야 잡화점의 기적 - 위로와 연결이 담긴 따뜻한 이야기`;
 
-    const botMessage: ChatMessage = { sender: "bot", text: recommendationText };
+    const botMessage: ChatMessage = { sender: "bot", text: botResponse };
     setMessages((prev) => [...prev, botMessage]);
 
     setQuestion("");
   };
 
-  return (
-    <div className="layout">
-      <div className="sidebar"></div>
-        <div className="chat-panel">
-          <div className="chat-container">
-      <div className="chat-content">
-        {messages.map((msg, idx) => (
-          <div key={idx} className={`chat-bubble ${msg.sender}`}>
-            <div className="chat-text">{msg.text}</div>
-          </div>
-        ))}
-      </div>
+  const handleBookmarkClick = () => {
+    alert("관심 도서 페이지로 이동!");
+  };
 
-      <div className="chat-input-bar">
-        <input
-          className="chat-input"
-          placeholder="무슨 책을 찾고 계신가요?"
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-        />
-        <button className="chat-send-button" onClick={handleSubmit}></button>
-      </div>
-    </div>
-    </div>
+  return (
+    <div className="chat-container">
+      <main className="chat-panel">
+        <div className="chat-content">
+          {messages.map((msg, idx) => (
+            <div key={idx} className={`chat-bubble ${msg.sender}`}>
+              <div className="chat-text">{msg.text}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="chat-input-bar">
+          <button className="bookmark-button" onClick={handleBookmarkClick}>
+            📚 관심 도서
+          </button>
+
+          <input
+            className="chat-input"
+            placeholder="도서 추천을 받아보세요..."
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+          />
+
+          <button className="chat-send-button" onClick={handleSubmit}>📤</button>
+        </div>
+      </main>
     </div>
   );
 }
