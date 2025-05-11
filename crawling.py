@@ -4,13 +4,13 @@ from bs4 import BeautifulSoup
 from time import sleep
 import requests
 import pandas as pd
+import re
 
-TIME = 2
 
-def get_introduction(isbn):
+def get_introduction(referer, isbn):
   url = f'https://www.aladin.co.kr/shop/product/getContents.aspx?ISBN={isbn}&name=Introduce&type=0&date=0'
   headers = {
-    "Referer": f"https://www.aladin.co.kr/shop/wproduct.aspx?ItemId={isbn}",
+    "Referer": referer,
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
   }
 
@@ -19,10 +19,13 @@ def get_introduction(isbn):
     soup = BeautifulSoup(response.text, "lxml")
 
     introduce_div = soup.find("div", {"class": "Ere_prod_mconts_LS"}, string="책소개")
+    if not introduce_div:
+      print("책 소개하는 내용이 없습니다")
+      return None
+
     parent_div = introduce_div.find_parent("div", {"class": "Ere_prod_mconts_box"})
     introduce_content_div = parent_div.find("div", {"class": "Ere_prod_mconts_R"})
 
-    introduce_content = None
     content_text = [] # 도서 소개 
   
     for element in introduce_content_div.children:
@@ -32,16 +35,28 @@ def get_introduction(isbn):
         content_text.append(element.strip()) # 앞뒤 공백 제거
       elif element.name == "br":
         content_text.append("\n")  
+      else:
+        content_text.append(element.get_text(separator="\n", strip=True))  
 
-      introduce_content = "".join(content_text).strip() # 하나의 문자열로 결합 후, 앞뒤 공백 제거
-      introduce_content = "\n".join([line.strip() for line in introduce_content.splitlines() if line.strip()])
+    introduce_content = "".join(content_text).strip() # 하나의 문자열로 결합 후, 앞뒤 공백 제거
+    introduce_content = "\n".join([line.strip() for line in introduce_content.splitlines() if line.strip()])
+
+    # 전처리
+    introduce_content = re.sub(r'[〈〉《》「」『』]', '', introduce_content) # 특수문자 제거
+    introduce_content = re.sub(r'[\u4e00-\u9fff]', '', introduce_content) # 한자 제거
+    introduce_content = re.sub(r'\n?\s*\d+\.\s*', ' ', introduce_content) # (1. 2. 3. 등) 제거
+    introduce_content = re.sub(r'\n?\s*•\s*', ' ', introduce_content) # (•) 제거
+    introduce_content = re.sub(r'\n?\s*[●]\s*', ' ', introduce_content) # (●) 제거거
+    introduce_content = re.sub(r'\s*[\n\r]+\s*', '. ', introduce_content) # 줄바꿈을 마침표로 자연스럽게 이어줌
+    introduce_content = re.sub(r'\.\s*\.+', '.', introduce_content) # 마침표 중복 제거
+    introduce_content = introduce_content.strip()
+
+    if not introduce_content.endswith('.'):
+      introduce_content += '.'
 
     if introduce_content:  
-      print(introduce_content)
-    else:
-      print("책 소개 내용을 찾을 수 없습니다")
-      return None
-
+      print("책 소개 ", introduce_content)
+   
     return introduce_content
   
   except requests.exceptions.HTTPError:
@@ -54,101 +69,84 @@ def get_introduction(isbn):
 
 # 알라딘 크롤링
 def crawl_aladin(page_num): 
-  driver = webdriver.Chrome()
-  url = "https://www.aladin.co.kr/shop/common/wbest.aspx?BranchType=1&BestType=Bestseller" # 알라딘 베스트셀러-주간 베스트
-  driver.get(url)
-  sleep(TIME)
   all_data = [] # 모든 도서 정보
 
   for page in range(1, page_num + 1): # 지정된 페이지만큼 접근
-    for index in range(50): # 현재 페이지에 있는 50개의 도서 목록
-      # 뒤로 가기 때문에 매번 도서를 찾아와야 함
-      book = driver.find_elements(By.CLASS_NAME, "ss_book_box")[index]
-      data = {} # 각 도서 정보
+    url = f"https://www.aladin.co.kr/shop/common/wbest.aspx?BranchType=1&BestType=Bestseller&page={page}"
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, "lxml")
+    books = soup.find_all("div", {"class": "ss_book_box"})
 
-      title_element = book.find_element(By.CLASS_NAME, "bo3") # 도서 제목
-      data["title"] = title_element.text
-      
-      try:
-        author_element = book.find_element(By.XPATH, './/div[@class="ss_book_list"]/ul/li[3]/a') # 도서 저자
-      except:
-        author_element = book.find_element(By.XPATH, './/div[@class="ss_book_list"]/ul/li[2]/a')
-      data["author"] = author_element.text  
-      
-      keyword_elements = book.find_elements(By.CLASS_NAME, "ss_f_g2") # 도서 키워드 없을 수도, 여러개일 수도 있음
+    for book in books:
+      title_element = book.find("a", {"class": "bo3"}) # 도서 제목
+      title = title_element.text.strip()
+      title = title.replace('★', '').strip() # 특수문자 제거
+      print("제목 ", title)
+
+      keyword_elements = book.find_all("span", {"class": "ss_f_g2"}) # 도서 키워드 없을 수도, 여러개일 수도 있음
       keywords = [keyword.text.replace('-', '').strip() for keyword in keyword_elements] # 전처리
-      data["keyword"] = keywords
       
-      # 상세 페이지 접근(도서 소개, 장르를 얻기 위해서)
-      title_element.click()
-      sleep(TIME)
+      # 상세 페이지 접근(저자, 도서 소개, 장르를 얻기 위해서)
+      book_url = title_element["href"]    
 
-      # 상세 페이지 맨 아래로 스크롤
-      driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-      sleep(TIME)
+      response = requests.get(book_url)
+      soup = BeautifulSoup(response.text, "lxml")
 
-      isbn = None
-      isbn2 = None
+      try:
+        author_element = soup.find("li", {"class": "Ere_sub2_title"}).find_all("a")[0] # 저자
+        author = author_element.text.strip()
+        print("저자 ", author)
+      except AttributeError:
+        print("로그인이 필요합니다")
+        continue
 
-      isbn_element = driver.find_element(By.XPATH, '//meta[@property="books:isbn"]')
-      isbn = isbn_element.get_attribute("content") # ISBN
+      isbn, isbn2 = None, None
+      isbn_meta = soup.find("meta", {"property": "books:isbn"})["content"]
+      isbn = isbn_meta
+
+      introduction = get_introduction(book_url, isbn_meta) # 도서 소개
       
-      data["isbn"] = isbn
-
-      if data["isbn"]:
-        introduction = get_introduction(isbn) # 도서 소개
-        data["introduction"] = introduction
-      
-      if not data["introduction"]: # ISBN이 달라져서 책 소개를 가져오지 못하는 경우 
+      if not introduction: # ISBN이 달라져서 책 소개를 가져오지 못하는 경우 
         try:
-          a_element = driver.find_element(By.CSS_SELECTOR, "a[onclick*='wrecommend_sms_send']") 
-          click_element = a_element.get_attribute("onclick")
-          print(click_element)
+          a_element = soup.find("a", onclick=lambda x: x and "wrecommend_sms_send" in x)
+          click_element = a_element.get("onclick")
           isbn_start_index = click_element.find("ISBN=")
-          print(isbn_element)
-
+        
           if isbn_start_index != -1:
             start_index = isbn_start_index + len("ISBN=")
             end_index = click_element.find(",", start_index)
             isbn2 = click_element[start_index : end_index]
-            isbn2 = isbn2.rstrip("%27") # %27이 뒤에 붙어있어서 제거
-            data["isbn"] = isbn2
+            isbn2 = isbn2.rstrip("'") #' 붙어있어서 제거
             print("isbn2 ", isbn2)
-
-            introduction = get_introduction(isbn2) # 도서 소개
-            data["introduction"] = introduction
+            isbn = isbn2
+            introduction = get_introduction(book_url, isbn2) # 도서 소개
 
         except Exception as e:
           print(type(e))
 
-      genre_elements = driver.find_elements(By.XPATH, '//*[@id="ulCategory"]/li[*]/a') # 도서 장르 여러개일 수 있음
-      genres = [genre.text.strip() for genre in genre_elements]
-      processed_genres = []
+      genre_elements = soup.find("ul", id="ulCategory").find_all("a") # 도서 장르 여러개일 수 있음
+      genres = set() # 장르 중복 제거
 
-      for genre in genres:
-        split_genres = [content.strip() for content in genre.split('/')] # '/'로 나누고 앞뒤 공백 제거
-        split_genres = [content for content in split_genres if content] # 빈 문자열 제거
-        processed_genres.extend(split_genres)
+      for genre in genre_elements:
+        genre_text = genre.text if genre else ""
+        genre_text = genre_text.replace('..', '').strip()
+        split_genres = [content.strip() for content in genre_text.split('/')] # '/'로 나누고 앞뒤 공백 제거
+        split_genres = [content for content in split_genres if content.strip() and content.strip() != "접기"] # 필요없거나 빈 문자열 제거
+        genres.update(split_genres)
 
-      data["genre"] = list(set(processed_genres)) # 중복 제거
+      print("장르", genres)
 
-      all_data.append(data)
-      
-      driver.back() # 베스트셀러 목록으로 돌아가기
-      sleep(TIME)
-
-    if page < page_num:
-      try:
-        next_page_xpath = f'//*[@id="newbg_body"]/div[4]/ul/li[{page + 2}]/a'
-        driver.find_element(By.XPATH, next_page_xpath).click() # 다음 페이지로 이동
-        sleep(TIME) # 페이지 로딩
-      except Exception as e:
-        print(f"다음 페이지로 이동 실패 : {type(e)}")
-    
-  driver.quit()
+      all_data.append({
+        "title": title,
+        "author": author,
+        "keyword": keywords,
+        "isbn": isbn,
+        "genre": genres,
+        "introduction": introduction
+      })
 
   df = pd.DataFrame(all_data)
   df.to_csv("aladin_bestseller.csv", encoding="utf-8-sig", index=False) # dataframe을 csv 파일로 변환
 
 if __name__ == "__main__":
-  crawl_aladin(6)  
+  crawl_aladin(page_num=8)  
