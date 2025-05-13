@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import "../BookRecommender.css"
 
 interface Props {
@@ -11,11 +12,14 @@ export default function ChatInput({
   question,
   setQuestion,
   onSubmit,
-  onBookmarkClick,
 }: Props) {
+  const navigate = useNavigate();
   return (
     <div className="chat-input-bar">
-      <button className="bookmark-button" onClick={onBookmarkClick}>
+      <button 
+        className="bookmark-button" 
+        onClick={() => navigate("/favorites")}
+      >
         📚 관심 도서
       </button>
 

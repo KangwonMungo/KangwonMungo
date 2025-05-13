@@ -1,10 +1,18 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App";
-import "./index.css"; // 전역 스타일 (선택)
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+// import App from "./App";
+import "./index.css";
+import BookRecommender from "./pages/BookRecommender";
+import FavoritesPage from "./pages/FavoritesPage";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<BookRecommender />} />
+        <Route path="/favorites" element={<FavoritesPage />} />
+      </Routes>
+    </BrowserRouter>
   </React.StrictMode>
 );
