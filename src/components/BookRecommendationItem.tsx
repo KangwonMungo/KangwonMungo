@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useFavorites } from "../context/FavoriteContext";
 import "./BookRecommendationItem.css";
 
 interface Props {
@@ -6,16 +6,19 @@ interface Props {
 }
 
 export default function BookRecommendationItem({ title }: Props) {
-  const [liked, setLiked] = useState(false);
+  const { addFavorite, removeFavorite, isFavorite } = useFavorites();
+  const liked = isFavorite(title);
+
+  const toggleLike = () => {
+    liked ? removeFavorite(title) : addFavorite({ title });
+  };
 
   return (
-    <div className="book-card">
-      <div className="book-title">
-        {title}
-      </div>
+    <div className="book-item">
+      <div className="book-title">{title}</div>
       <button
         className="heart-icon"
-        onClick={() => setLiked(!liked)}
+        onClick={toggleLike}
         title="찜한 목록으로 가기"
       >
         {liked ? "❤️" : "🤍"}
@@ -23,3 +26,6 @@ export default function BookRecommendationItem({ title }: Props) {
     </div>
   );
 }
+
+
+

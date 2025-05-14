@@ -1,5 +1,3 @@
-// 📁 src/components/ChatMessage.tsx
-import React from "react";
 import "./BookRecommender.css";
 import BookRecommendationItem from "./BookRecommendationItem";
 
@@ -16,21 +14,21 @@ export default function ChatMessage({ sender, text }: Props) {
     const items = lines.slice(1);
 
     return (
-      <div className={`chat-bubble ${sender}`}>
-        <div className="chat-text">
-          <div style={{ marginBottom: "0.5rem" }}>{header}</div>
-          {items.map((line, idx) => (
-            <BookRecommendationItem key={idx} title={line} />
-          ))}
+        <div className={`chat-bubble ${sender}`}>
+          <div className="chat-text">
+            <div style={{ marginBottom: "0.5rem" }}>{header}</div>
+            {items.map((line, idx) => (
+              <BookRecommendationItem key={idx} title={line} />
+            ))}
+          </div>
         </div>
-      </div>
     );
   }
 
-  // 기본 메시지 출력
+  // 일반 메시지 출력
   return (
-    <div className={`chat-bubble ${sender}`}>
-      <div className="chat-text">{text}</div>
-    </div>
+      <div className={`chat-bubble ${sender}`}>
+        <div className="chat-text">{text}</div>
+      </div>
   );
 }

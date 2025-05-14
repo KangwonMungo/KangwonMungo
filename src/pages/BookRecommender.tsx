@@ -1,7 +1,7 @@
 import { useState } from "react";
 import ChatMessage from "../components/ChatMessage";
 import ChatInput from "../components/ChatInput"
-import "../BookRecommender.css";
+import "../components/BookRecommender.css";
 import BookRecommendationItem from "../components/BookRecommendationItem";
 
 export interface ChatMessageType {
@@ -25,8 +25,6 @@ export default function BookRecommender() {
 2. 소년이 온다 - 상실과 기억을 다룬 깊이 있는 이야기
 3. 나미야 잡화점의 기적 - 위로와 연결이 담긴 따뜻한 이야기`;
 
-    <BookRecommendationItem title="아몬드 - 감정을 배우는 소년의 성장 이야기" />
-    
     const botMessage: ChatMessageType = { sender: "bot", text: botResponse };
     setMessages((prev) => [...prev, botMessage]);
 
@@ -39,6 +37,9 @@ export default function BookRecommender() {
 
   return (
     <div className="chat-container">
+      <div className="side-illustration">
+        <img src="../assets/bear.png" alt="" className="side-image" />
+      </div>
       <div className="chat-panel">
         <div className="chat-content">
           {messages.map((msg, idx) => (

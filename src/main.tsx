@@ -5,14 +5,17 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./index.css";
 import BookRecommender from "./pages/BookRecommender";
 import FavoritesPage from "./pages/FavoritesPage";
+import { FavoriteProvider } from "./context/FavoriteContext";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<BookRecommender />} />
-        <Route path="/favorites" element={<FavoritesPage />} />
-      </Routes>
-    </BrowserRouter>
+    <FavoriteProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<BookRecommender />} />
+          <Route path="/favorites" element={<FavoritesPage />} />
+        </Routes>
+      </BrowserRouter>
+    </FavoriteProvider>
   </React.StrictMode>
 );
