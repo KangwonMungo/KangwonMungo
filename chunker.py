@@ -118,3 +118,19 @@ def chunk_file():
                 **meta_data # 책 공통 메타데이터
             }
             all_chunk_data.append(chunk_data)
+
+
+def print_all_chunk_data():
+    global all_chunk_data
+    # 만들어진 chunk 확인
+    if all_chunk_data:
+        for i, data_item in enumerate(all_chunk_data):
+            print(f"\nProcessed Chunk {i+1}:")
+            print(f"  Title: {data_item.get('title', '')}")
+            print(f"  Author: {data_item.get('author', '')}")
+            print(f"  Keywords: {data_item.get('keywords', [])}")
+            print(f"  Genres: {data_item.get('genres', [])}")
+            print(f"  Chunk Index: {data_item.get('chunk_index', '')}")
+            print(f"  Introduction Chunk: {data_item.get('introduction_chunk', '')}")
+    else:
+        print("생성된 Chunk 데이터가 없습니다.")
