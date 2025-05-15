@@ -5,7 +5,7 @@ import kss
 CHUNK_SIZE = 2
 INPUT_CSV_PATH = "./aladin_bestseller.csv"
 
-all_chunk_data_with_metadata = []
+all_chunk_data = []
 
 # CSV 파일 열기
 try:
@@ -53,3 +53,68 @@ def chunk_sentences(sentence_list, chunk_size):
     if not all_chunks:
         all_chunks.append(" ".join(sentence_list)) # 하나의 청크로 만들기
     return all_chunks
+
+
+def chunk_file():
+    global all_chunk_data
+    all_chunk_data = []
+
+    for index, row in book_csv.iterrows():
+        # data 컬럼 파싱 - row.get('컬럼', '기본값')
+        try:
+            title = str(row.get('title', ''))
+            author = str(row.get('author', ''))
+            keyword_str = str(row.get('keyword', '[]'))
+            genre_str = str(row.get('genre', '{}'))
+            introduction_str = str(row.get('introduction', ''))
+        except KeyError as e:
+            print(f"컬럼({e})가 없습니다.")
+            continue
+        except Exception as e:
+            print(f"Error: {e}")
+            continue
+
+        # 1-1. keyword 파싱
+        keywords = parse_list_from_string(keyword_str) # "[]" -> []
+
+        # 1-2. genre 파싱
+        genre_set = parse_set_from_string(genre_str) # "{}" -> {}
+        genres = list(genre_set if genre_set else []) # set을 list로 변환
+
+        # 2. Introduction 텍스트 chunking
+        introduction_chunks = [] # 'CHUNK_SIZE'개의 문장을 묶은 chunk들이 담을 리스트
+
+        if introduction_str != "": # introduction 내용이 있으면, 없으면 그대로 빈 리스트
+            try:
+                # 문장 분리
+                sentence_list = kss.split_sentences(introduction_str) # 문장 리스트 - 한 문장이 하나의 요소
+            except Exception as e:
+                print(f"문장 분리 실패: {e}")
+                sentence_list = [introduction_str] # 분리 실패 시 하나의 문장으로
+
+            # 분리된 문장이 있으면 chunking
+            if sentence_list != []:
+                introduction_chunks = chunk_sentences(sentence_list, CHUNK_SIZE) # [] or chunk 리스트 반환
+
+            # 만약, chunk가 만들어지지 않은 경우
+            if not introduction_chunks:
+                introduction_chunks = [introduction_str] # 하나의 chunk로 만들기
+        else:
+            introduction_chunks = [""]
+        
+        # 3. 각 chunk에 메타데이터 연결하여 최종 데이터 생성
+        # 현재 도서의 메타데이터
+        meta_data = {
+            "title": title,
+            "author": author,
+            "keywords": keywords,
+            "genres": genres, # set -> list
+        }
+
+        for i, introduction_chunk in enumerate(introduction_chunks):
+            chunk_data = {
+                "chunk_index": i + 1,
+                "introduction_chunk": introduction_chunk,
+                **meta_data # 책 공통 메타데이터
+            }
+            all_chunk_data.append(chunk_data)
