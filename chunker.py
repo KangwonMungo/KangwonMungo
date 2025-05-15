@@ -35,3 +35,21 @@ def parse_set_from_string(s):
     str_list = re.findall(r"'(.*?)'", s)
     str_set = set(str_list)
     return str_set
+
+
+# chunking 함수 - 문장 'CHUNK_SIZE'개씩 chunking
+def chunk_sentences(sentence_list, chunk_size):
+    all_chunks = []
+    
+    if not sentence_list: # 빈 리스트
+        return all_chunks
+
+    for i in range(0, len(sentence_list), chunk_size):
+        selected_sentences_list = sentence_list[i:i + chunk_size] # 리스트 슬라이싱: 인덱스 범위를 넘어가도 오류 없이 가능한 끝까지 가져옴
+        sentence_chunk = " ".join(selected_sentences_list)
+        all_chunks.append(sentence_chunk)
+    
+    # 청크가 만들어지지 않은 경우 (e.g. 길이가 1인데 chunk_sizer가 2)
+    if not all_chunks:
+        all_chunks.append(" ".join(sentence_list)) # 하나의 청크로 만들기
+    return all_chunks
