@@ -81,8 +81,8 @@ def crawl_aladin(page_num):
         "keyword": keywords,
         "isbn": isbn,
         "genre": genres,
+        "image": image,
         "introduction": introduction,
-        "image": image
       })
 
   df = pd.DataFrame(all_data)
