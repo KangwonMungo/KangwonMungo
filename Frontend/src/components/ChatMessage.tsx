@@ -1,4 +1,4 @@
-import "./BookRecommender.css";
+import "../pages/BookRecommender.css";
 import BookRecommendationItem from "./BookRecommendationItem";
 
 interface Props {

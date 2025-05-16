@@ -1,7 +1,7 @@
 import { useState } from "react";
 import ChatMessage from "../components/ChatMessage";
 import ChatInput from "../components/ChatInput";
-import "../components/BookRecommender.css";
+import "./BookRecommender.css";
 import { Message } from "../App";
 
 interface BookRecommenderProps {
