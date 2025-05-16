@@ -25,6 +25,11 @@
   
 }
 
+.heart-icon:focus {
+  outline: none;
+  box-shadow: none;
+}
+
 .heart-icon:hover {
   transform: scale(1.15);
 }
