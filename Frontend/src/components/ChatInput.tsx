@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import "../pages/BookRecommender.css"
+import "./ChatInput.css"
 
 interface Props {
   question: string;

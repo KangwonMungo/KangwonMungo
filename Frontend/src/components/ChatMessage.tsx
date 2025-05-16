@@ -1,4 +1,4 @@
-import "../pages/BookRecommender.css";
+import "./ChatMessage.css"
 import BookRecommendationItem from "./BookRecommendationItem";
 
 interface Props {
