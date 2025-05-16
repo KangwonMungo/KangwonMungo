@@ -5,7 +5,6 @@ interface Props {
   question: string;
   setQuestion: (q: string) => void;
   onSubmit: () => void;
-  onBookmarkClick: () => void;
 }
 
 export default function ChatInput({
