@@ -13,7 +13,7 @@
   display: block;
   height: 100vh;
   width: 100vw;
-  background-color: #b3dff3;
+  background-color: #BDE3DA;
 }
 /* 채팅 패널 */
 .chat-panel {
@@ -22,7 +22,7 @@
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  background-color: #b3dff3;
+  background-color: #BDE3DA;
 }
 
 /* 채팅 내용 스크롤 영역 */
@@ -33,7 +33,7 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  background-color: gray;
+  background-color: #BDE3DA;
 }
 
 /* 채팅 말풍선 */
@@ -49,13 +49,13 @@
 
 .chat-bubble.user {
   align-self: flex-end;
-  background-color: #daf1ff;
+  background-color: white;
   color: #000;
 }
 
 .chat-bubble.bot {
   align-self: flex-start;
-  background-color: #f1f1f1;
+  background-color: white;
   color: #333;
 }
 
@@ -68,7 +68,7 @@
   display: flex;
   align-items: center;
   padding: 1rem;
-  background-color: #b3dff3;
+  background-color: #BDE3DA;
   margin-top: 2rem;
 }
 
@@ -78,7 +78,7 @@
   padding: 0.75rem;
   font-size: 1rem;
   border: 1px solid #ccc;
-  background-color: gray;
+  background-color: #F9F9F9;
   border-radius: 6px;
   outline: none;
   margin: 0 0.5rem;

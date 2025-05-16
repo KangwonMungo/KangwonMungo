@@ -14,6 +14,7 @@
 .book-title {
   flex: 1;
   color: #1e1e1e;
+  font-weight: bold;
 }
 
 .heart-icon {
@@ -32,7 +33,7 @@
   display: flex; 
   align-items: center;
   justify-content: space-between;
-  background-color: #d5ccff;
+  background-color: #E0F2F7;
   padding: 0.5rem 1rem;
   margin-bottom: 0.5rem;
   border-radius: 12px;
