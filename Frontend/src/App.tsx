@@ -17,10 +17,7 @@ function App() {
         <Route
           path="/"
           element={
-            <BookRecommender
-              messages={messages}
-              setMessages={setMessages}
-            />
+            <BookRecommender messages={messages} setMessages={setMessages} />
           }
         />
         <Route path="/favorites" element={<FavoritesPage />} />
