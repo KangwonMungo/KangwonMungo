@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+
 import ChatMessage from "../components/ChatMessage";
 import ChatInput from "../components/ChatInput";
 import "./BookRecommender.css";
@@ -65,6 +66,7 @@ export default function BookRecommender({
       <div className="chat-panel">
         <div className="chat-content">
           {messages.map((msg, idx) => (
+
             <ChatMessage key={idx} sender={msg.sender} text={msg.text} />
           ))}
         </div>
@@ -78,3 +80,4 @@ export default function BookRecommender({
     </div>
   );
 }
+
