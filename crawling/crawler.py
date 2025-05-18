@@ -3,13 +3,18 @@ import requests
 import pandas as pd
 from introduction import get_introduction
 
-# 알라딘 크롤링
-def crawl_aladin(page_num): 
+"""
+주차별로 알라딘 주간 베스트를 크롤링하는 함수
+
+도서 제목, 저자, 키워드, ISBN(국제표준도서번호), 장르, 도서 커버 이미지를 얻어냄 
+"""
+def crawl_bestseller(page_num, year, month, week): 
   all_data = [] # 모든 도서 정보
 
   for page in range(1, page_num + 1): # 지정된 페이지만큼 접근
-    url = f"https://www.aladin.co.kr/shop/common/wbest.aspx?BranchType=1&BestType=Bestseller&page={page}"
+    url = f"https://www.aladin.co.kr/shop/common/wbest.aspx?BranchType=1&CID=0&Year={year}&Month={month}&Week={week}&BestType=Bestseller&page={page}"
     response = requests.get(url)
+
     soup = BeautifulSoup(response.text, "lxml")
     books = soup.find_all("div", {"class": "ss_book_box"})
 
@@ -36,9 +41,16 @@ def crawl_aladin(page_num):
         continue
 
       isbn, isbn2 = None, None
-      isbn_element = soup.find("meta", {"property": "books:isbn"})["content"]
+      try:
+        isbn_element = soup.find("meta", {"property": "books:isbn"})["content"]
+      except Exception as e:
+        li_tags = soup.find("conts_info_list1").find('ul').find_all('li')
+        for li in li_tags:
+          if "ISBN: " in li.text:
+            isbn_element = li.text.replace("ISBN :", "").strip()
+            break
+      
       isbn = isbn_element
-
       introduction = get_introduction(book_url, isbn_element) # 도서 소개
       
       if not introduction: # ISBN이 달라져서 책 소개를 가져오지 못하는 경우 
@@ -85,8 +97,4 @@ def crawl_aladin(page_num):
         "introduction": introduction,
       })
 
-  df = pd.DataFrame(all_data)
-  df.to_csv("aladin_bestseller.csv", encoding="utf-8-sig", index=False) # dataframe을 csv 파일로 변환
-
-if __name__ == "__main__":
-  crawl_aladin(page_num=8)  
+  return all_data
