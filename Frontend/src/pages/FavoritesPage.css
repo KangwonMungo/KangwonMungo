@@ -1,0 +1,62 @@
+.favorites-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #BDE3DA;
+  height: 100vh;
+  width: 100vw;
+}
+
+.favorites-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 640px;
+  font-weight: bold;
+}
+
+.favorites-title {
+  text-align: center;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.favorites-list {
+  list-style: none;
+  padding: 0;
+  width: 100%;
+}
+
+.favorites-item {
+  background: #E0F2F7;
+  margin: 1rem 0;
+  padding: 1rem;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.favorites-remove-btn {
+  background-color: #ff5c5c;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+}
+
+.favorites-back-btn {
+  margin-top: 2rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #aaa;
+  border-radius: 6px;
+  cursor: pointer;
+}

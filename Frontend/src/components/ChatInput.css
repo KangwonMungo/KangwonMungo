@@ -1,0 +1,48 @@
+/* 입력 바 */
+.chat-input-bar {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  background-color: #BDE3DA;
+  margin-top: 2rem;
+}
+
+/* 입력창 */
+.chat-input {
+  flex: 1;
+  padding: 0.75rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  background-color: #F9F9F9;
+  border-radius: 6px;
+  outline: none;
+  margin: 0 0.5rem;
+}
+
+
+/* 전송 버튼 */
+.chat-send-button {
+  padding: 0.5rem 1rem;
+  background-color: royalblue;
+  color: white;
+  font-size: 1.2rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* 관심 도서 버튼 */
+.bookmark-button {
+  padding: 0.65rem 0.9rem;
+  font-size: 1rem;
+  height: 100%;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: white;
+  margin-right: 0.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.2s ease;
+}
