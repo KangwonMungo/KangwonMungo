@@ -3,7 +3,7 @@
 ```bash
 # 패키지 설치
 npm install
-pip install axios fastapi
+pip install axios fastapi pydantic
 
 # 로컬 서버 실행
 cd KANGWONMUNGO/Frontend
