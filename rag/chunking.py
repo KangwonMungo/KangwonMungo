@@ -55,6 +55,44 @@ def chunk_sentences(sentence_list, chunk_size):
     return all_chunks
 
 
+def chunk_file_by_line():
+    global all_chunk_data
+    all_chunk_data = []
+    
+    for index, row in book_csv.iterrows():
+        try:
+            title = str(row.get('title', ''))
+            author = str(row.get('author', ''))
+            keyword_str = str(row.get('keyword', '[]'))
+            genre_str = str(row.get('genre', '{}'))
+            introduction = str(row.get('introduction', ''))
+        except KeyError as e:
+            print(f"컬럼({e})가 없습니다.")
+            continue
+        except Exception as e:
+            print(f"Error: {e}")
+            continue
+
+        keywords = parse_list_from_string(keyword_str)
+
+        genre_set = parse_set_from_string(genre_str)
+        genres = list(genre_set if genre_set else [])
+
+        meta_data = {
+            "title": title,
+            "author": author,
+            "keywords": keywords,
+            "genres": genres,
+        }
+
+        chunk_data = {
+            "chunk_index": index+1,
+            "introduction": introduction,
+            **meta_data
+        }
+        all_chunk_data.append(chunk_data)
+
+
 def chunk_file():
     global all_chunk_data
     all_chunk_data = []
@@ -131,6 +169,11 @@ def print_all_chunk_data():
             print(f"  Keywords: {data_item.get('keywords', [])}")
             print(f"  Genres: {data_item.get('genres', [])}")
             print(f"  Chunk Index: {data_item.get('chunk_index', '')}")
-            print(f"  Introduction Chunk: {data_item.get('introduction_chunk', '')}")
+            print(f"  Introduction Chunk: {data_item.get('introduction', '')}")
     else:
         print("생성된 Chunk 데이터가 없습니다.")
+
+if __name__ == "__main__":
+    chunk_file_by_line()
+    print_all_chunk_data()
+    print('='*50)
