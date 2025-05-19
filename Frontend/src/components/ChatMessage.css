@@ -1,0 +1,25 @@
+/* 채팅 말풍선 */
+.chat-bubble {
+  max-width: 80%;
+  margin: 0.5rem 0;
+  padding: 1rem 1.25rem;
+  border-radius: 18px;
+  white-space: pre-line;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+.chat-bubble.user {
+  align-self: flex-end;
+  background-color: white;
+  color: #000;
+}
+
+.chat-bubble.bot {
+  align-self: flex-start;
+  background-color: white;
+  color: #333;
+}
+
+.chat-text {
+  word-break: break-word;
+}
