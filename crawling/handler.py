@@ -1,10 +1,17 @@
 import pandas as pd
 
-"""
-주차(week)별 베스트 데이터들을 중복이 있는지 비교하여
-최종 도서 데이터를 만들고 CSV 파일로 저장 
-"""
-def process_bestseller(weekly_data):
+def process_bestseller(weekly_data: dict):
+    """
+    주차(week)별 베스트셀러 데이터를 받아서 ISBN으로 중복된 도서를 제거하고
+    최종적으로 고유한 도서 정보 데이터들을 생성하여 csv 파일로 저장하는 함수
+
+    Args:
+        weekly_data (dict): 주차를 키(int)로 하고, 
+                            해당 주차(week)의 도서 정보 리스트를 값으로 가지는 딕셔너리                         
+
+    Returns:
+        고유한 도서 정보 데이터를 'aladin_bestseller.csv' 파일로 저장
+    """
     try:
         all_books = {}
         
@@ -14,7 +21,6 @@ def process_bestseller(weekly_data):
                 isbn = book.get("isbn")
                 if isbn:
                     key = isbn.strip()
-
                 if key not in all_books:
                     all_books[key] = book
         
@@ -24,6 +30,6 @@ def process_bestseller(weekly_data):
             print(f"총 {len(df)}개의 도서가 저장되었습니다")
     
     except TypeError:
-        print({type(e)})
+        print(f"타입 오류 발생{type(e)}")
     except Exception as e:
         print(f"최종 도서 데이터 오류 발생 {type(e)}")

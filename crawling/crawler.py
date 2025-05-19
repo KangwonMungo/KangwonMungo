@@ -3,12 +3,27 @@ import requests
 import pandas as pd
 from introduction import get_introduction
 
-"""
-주차별로 알라딘 주간 베스트를 크롤링하는 함수
+def crawl_bestseller(page_num: int, year: int, month: int, week: int) -> list:
+  """
+  현재 날짜를 기준으로 알라딘 주간 베스트를 주차(week)별로 크롤링하는 함수 
 
-도서 제목, 저자, 키워드, ISBN(국제표준도서번호), 장르, 도서 커버 이미지를 얻어냄 
-"""
-def crawl_bestseller(page_num, year, month, week): 
+  Args:
+      page_num (int) : 크롤링할 페이지 수
+      year (int) : 크롤링할 연도
+      month (int) : 크롤링할 월
+      week (int) : 크롤링할 주차
+
+  Returns:
+      list : 각 도서의 정보를 담고 있는 딕셔너리들의 리스트   
+             각 딕셔너리의 키들은 아래와 같습니다
+             "title" (str) : 도서 제목
+             "author" (str) : 도서 저자
+             "keyword" (str) : 키워드
+             "isbn" (str) : ISBN(국제표준도서번호)
+             "genre" (str) : 도서 장르
+             "image" (str) : 도서 커버 이미지 URL
+             "introduction" (str) : 도서 소개 
+  """
   all_data = [] # 모든 도서 정보
 
   for page in range(1, page_num + 1): # 지정된 페이지만큼 접근
