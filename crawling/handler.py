@@ -1,7 +1,7 @@
 import pandas as pd
 
 """
-주차별 주간 베스트 데이터들을 중복이 있는지 비교하여
+주차(week)별 베스트 데이터들을 중복이 있는지 비교하여
 최종 도서 데이터를 만들고 CSV 파일로 저장 
 """
 def process_bestseller(weekly_data):

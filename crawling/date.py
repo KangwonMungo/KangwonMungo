@@ -1,7 +1,7 @@
 import datetime
 
 """
-현재 년도와 월, 현재 주(week)차를 반환하는 함수 
+현재 년도와 월, 현재 주차(week)를 반환하는 함수 
 """
 def get_current_dates():
     now = datetime.datetime.now()
