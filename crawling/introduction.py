@@ -2,8 +2,17 @@ from bs4 import BeautifulSoup
 import requests
 import re
 
-# 도서 소개 얻기
-def get_introduction(referer, isbn):
+def get_introduction(referer: str, isbn: str):
+  """
+  알라딘 상세 페이지의 getContents를 호출하여 도서 내용을 추출
+
+  Args:
+      referer (str) : Referer 헤더값, 상세 페이지 URL
+      isbn (str) : 도서의 isbn
+
+  Returns:
+        str 또는 None : 도서의 소개 내용 
+  """
   url = f'https://www.aladin.co.kr/shop/product/getContents.aspx?ISBN={isbn}&name=Introduce&type=0&date=0' # 동적 로딩 
   headers = {
     "Referer": referer,
@@ -13,8 +22,15 @@ def get_introduction(referer, isbn):
   try:
     response = requests.get(url, headers=headers, timeout=10)
     soup = BeautifulSoup(response.text, "lxml")
+    
+    introduce_div = None
+    div_tags = soup.find_all("div", {"class": "Ere_prod_mconts_LS"})
 
-    introduce_div = soup.find("div", {"class": "Ere_prod_mconts_LS"}, string="책소개")
+    for div in div_tags :
+      if "소개" in div.text.strip():
+        introduce_div = div
+        break
+    
     if not introduce_div:
       print("책 소개하는 내용이 없습니다")
       return None
@@ -52,7 +68,10 @@ def get_introduction(referer, isbn):
   
   except requests.exceptions.HTTPError:
     print(f"Http Error")
+    return None
   except requests.exceptions.Timeout:
     print(f"Timeout Error")  
+    return None
   except Exception as e:
-    print(type(e))
+    print(f"오류 발생 type(e)")
+    return None

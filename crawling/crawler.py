@@ -3,13 +3,33 @@ import requests
 import pandas as pd
 from introduction import get_introduction
 
-# 알라딘 크롤링
-def crawl_aladin(page_num): 
+def crawl_bestseller(page_num: int, year: int, month: int, week: int) -> list:
+  """
+  현재 날짜를 기준으로 알라딘 주간 베스트를 주차(week)별로 크롤링하는 함수 
+
+  Args:
+      page_num (int) : 크롤링할 페이지 수
+      year (int) : 크롤링할 연도
+      month (int) : 크롤링할 월
+      week (int) : 크롤링할 주차
+
+  Returns:
+      list : 각 도서의 정보를 담고 있는 딕셔너리들의 리스트   
+             각 딕셔너리의 키들은 아래와 같습니다
+             "title" (str) : 도서 제목
+             "author" (str) : 도서 저자
+             "keyword" (str) : 키워드
+             "isbn" (str) : ISBN(국제표준도서번호)
+             "genre" (str) : 도서 장르
+             "image" (str) : 도서 커버 이미지 URL
+             "introduction" (str) : 도서 소개 
+  """
   all_data = [] # 모든 도서 정보
 
   for page in range(1, page_num + 1): # 지정된 페이지만큼 접근
-    url = f"https://www.aladin.co.kr/shop/common/wbest.aspx?BranchType=1&BestType=Bestseller&page={page}"
+    url = f"https://www.aladin.co.kr/shop/common/wbest.aspx?BranchType=1&CID=0&Year={year}&Month={month}&Week={week}&BestType=Bestseller&page={page}"
     response = requests.get(url)
+
     soup = BeautifulSoup(response.text, "lxml")
     books = soup.find_all("div", {"class": "ss_book_box"})
 
@@ -36,9 +56,16 @@ def crawl_aladin(page_num):
         continue
 
       isbn, isbn2 = None, None
-      isbn_element = soup.find("meta", {"property": "books:isbn"})["content"]
+      try:
+        isbn_element = soup.find("meta", {"property": "books:isbn"})["content"]
+      except Exception as e:
+        li_tags = soup.find("conts_info_list1").find('ul').find_all('li')
+        for li in li_tags:
+          if "ISBN: " in li.text:
+            isbn_element = li.text.replace("ISBN :", "").strip()
+            break
+      
       isbn = isbn_element
-
       introduction = get_introduction(book_url, isbn_element) # 도서 소개
       
       if not introduction: # ISBN이 달라져서 책 소개를 가져오지 못하는 경우 
@@ -85,8 +112,4 @@ def crawl_aladin(page_num):
         "introduction": introduction,
       })
 
-  df = pd.DataFrame(all_data)
-  df.to_csv("aladin_bestseller.csv", encoding="utf-8-sig", index=False) # dataframe을 csv 파일로 변환
-
-if __name__ == "__main__":
-  crawl_aladin(page_num=8)  
+  return all_data
