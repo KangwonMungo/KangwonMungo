@@ -7,17 +7,46 @@
   white-space: pre-line;
   line-height: 1.5;
   font-size: 0.95rem;
+  position: relative;
+  -webkit-border-radius: 20px;
+  -moz-border-radius: 20px;
 }
 .chat-bubble.user {
   align-self: flex-end;
   background-color: white;
   color: #000;
 }
+/* 사용자 말풍선 꼬리 */
+.chat-bubble.user::after {
+  content: '';
+  position: absolute;
+  border-style: solid;
+  border-width: 20px 0 6px 20px; /* 위 오른쪽 아래 왼쪽 */
+  border-color: transparent #FFFFFF;
+  display: block;
+  width: 0;
+  z-index: 1;
+  right: -11px;
+  top: 30%;
+}
 
 .chat-bubble.bot {
   align-self: flex-start;
   background-color: white;
   color: #333;
+}
+/* 챗봇 말풍선 꼬리 */
+.chat-bubble.bot::after {
+  content: '';
+  position: absolute;
+  border-style: solid;
+  border-width: 20px 20px 6px 0; 
+  border-color: transparent #FFFFFF; 
+  display: block;
+  width: 0;
+  z-index: 1;
+  left: -11px; 
+  top: 85%; 
 }
 
 .chat-text {
