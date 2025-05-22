@@ -29,6 +29,7 @@ def chunk_file_by_line(book_df: pd.DataFrame) ->  List[Dict[str, Any]]:
             author = str(row.get('author', ''))
             keyword_str = str(row.get('keyword', '[]'))
             genre_str = str(row.get('genre', '{}'))
+            img_url = str(row.get('image', ''))
             introduction = str(row.get('introduction', ''))
         except KeyError as e:
             print(f"컬럼({e})가 없습니다.")
@@ -47,6 +48,7 @@ def chunk_file_by_line(book_df: pd.DataFrame) ->  List[Dict[str, Any]]:
             "author": author,
             "keywords": keywords,
             "genres": genres,
+            "img_url": img_url,
         }
 
         chunk_data = {
@@ -67,6 +69,7 @@ def print_all_chunk_data(all_chunk_data: List[Dict[str, Any]]) -> None:
             print(f"  Author: {chunk.get('author', '')}")
             print(f"  Keywords: {chunk.get('keywords', [])}")
             print(f"  Genres: {chunk.get('genres', [])}")
+            print(f"  Image URL: {chunk.get('img_url', '')}")
             print(f"  Chunk Index: {chunk.get('chunk_index', '')}")
             print(f"  Introduction Chunk: {chunk.get('introduction', '')}")
     else:
