@@ -2,6 +2,17 @@ from fastapi import FastAPI,Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
+import os
+
+from dotenv import load_dotenv
+from google.generativeai import configure, genai
+# Google Generative AI API 설정 
+
+load_dotenv()
+
+api_key = os.getenv("GOOGLE_API_KEY")
+genai.configure(api_key=api_key)
+
 
 app = FastAPI()
 
