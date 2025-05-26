@@ -32,7 +32,7 @@ def process_bestseller(weekly_data: dict):
                 processed_book = {}
                 for key, value in book_info.items():
                     if pd.isna(value): # NaN 처리
-                        processed_book[key] = None 
+                        processed_book[key] = ""
                     elif isinstance(value, set): 
                         processed_book[key] = list(value)
                     else:
@@ -41,6 +41,7 @@ def process_bestseller(weekly_data: dict):
             with open("aladin_bestseller.json", "w", encoding="utf-8") as file:
                 json.dump(processed_books, file, ensure_ascii=False, indent=4)
             print(f"총 {len(all_books)}개의 도서가 저장되었습니다")
+        
         # if all_books:
         #     df = pd.DataFrame(list(all_books.values()))  # 딕셔너리의 값을 리스트로 변환하여 dataframe 생성
         #     df.to_csv("aladin_bestseller.csv", encoding="utf-8-sig", index=False)
