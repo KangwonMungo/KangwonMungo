@@ -39,6 +39,8 @@ if __name__ == '__main__':
             print("아직 크롤링할 수 없습니다")
             break
 
+    print(f"총 {len(threads)}개의 스레드가 만들어졌습니다")
+
     for thread in threads:
         thread.join()
         print("스레드가 종료되었습니다")
