@@ -5,7 +5,8 @@ from typing import List
 import os
 
 from dotenv import load_dotenv
-from google.generativeai import configure, genai
+from google.generativeai import configure
+import google.generativeai as genai
 # Google Generative AI API 설정 
 
 load_dotenv()
