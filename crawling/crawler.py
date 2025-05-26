@@ -86,6 +86,11 @@ def crawl_bestseller(page_num: int, year: int, month: int, week: int) -> list:
         except Exception as e:
           print(type(e))
 
+      # 책 소개가 없는 경우, 데이터 추가하지 않음
+      if not introduction:
+        print(f"책 소개가 존재하지 않습니다. 다음 도서로 넘어갑니다")
+        continue  
+
       genre_elements = soup.find("ul", id="ulCategory").find_all("a") # 도서 장르 여러개일 수 있음
       genres = set() # 장르 중복 제거
 
