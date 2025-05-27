@@ -1,8 +1,10 @@
 import json
 from dotenv import load_dotenv
 from typing import List, Dict, Any
+from vector_store import store_chroma, retrieve_chroma
 
-COLLECTION_NAME = "book_collection"
+# pip install faiss-cpu
+# pip install openai
 
 load_dotenv()
 
@@ -66,16 +68,20 @@ if __name__ == "__main__":
     try:
         # 1. chunking
         all_chunks = chunk_file_by_line(PATH)
-        print(f"\n생성된 총 청크(행) 개수: {len(all_chunks)}")
-        print_all_chunk_data(all_chunks)
+        # print(f"\n생성된 총 청크(행) 개수: {len(all_chunks)}")
+        # print_all_chunk_data(all_chunks)
+        # print('='*50)
+
+        # 2. 벡터 스토어 생성 
+        collections = store_chroma(all_chunks)
         print('='*50)
 
-        # 2. 벡터 스토어 저장
-
         # 3. Retriever
+        query = "흥미롭고 신비로운 책"
+        retrieved_documents = retrieve_chroma(collections, query, num=20)
+        print('='*50)
         
         # 4. Reranker
-        
 
         # 5. prompt
 
