@@ -1,12 +1,55 @@
 import json
+import re
+
 from dotenv import load_dotenv
 from typing import List, Dict, Any
 from vector_store import store_chroma, retrieve_chroma
 
-# pip install faiss-cpu
-# pip install openai
 
 load_dotenv()
+
+
+def initialize_chunk(introduction: str, max_chunk_size: int, chunk_overlap: int) -> List[str]:
+    """
+    하나의 긴 책 소개를 문장 단위로 분할하여 청크 리스트로 반환
+    
+    Args:
+        introduction (str): 책 소개 텍스트
+        max_chunk_size (int): 각 청크의 최대 문자 길이
+        chunk_overlap (int): 맥락 이어지도록 겹칠 문자 수 
+
+    Returns:
+        List[str]: 분리된 청크 리스트.
+    """
+    # 텍스트를 마침표, 물음표, 느낌표, 공백 문자를 기준으로 문장 단위로 분리
+    sentences = re.split(r'(?<=[.?!])\s+', introduction.strip())
+    sentences = [sentence.strip() for sentence in sentences if sentence.strip()]
+
+    if not sentences:
+        return []
+
+    chunks = [] # 모든 청크들이 저장
+    current_chunk = [] # 현재 만들고 있는 하나의 청크에 포함될 문장들이 저장 
+    current_chunk_len = 0
+
+    for i, sentence in enumerate(sentences):
+        # 현재 문장을 추가했을 때 max_chunk_size를 초과하는지 확인
+        if current_chunk_len + len(sentence) + (len(current_chunk) > 0) > max_chunk_size and current_chunk:
+            # 현재까지 모은 문장들을 하나의 청크로 추가
+            chunks.append(" ".join(current_chunk))
+            
+            # 이전 문장들을 chunk_overlap만큼 가져와서 다음 청크의 시작으로 사용
+            current_chunk = sentences[max(0, i - chunk_overlap) : i]
+            current_chunk_len = sum(len(sentence) for sentence in current_chunk) + (len(current_chunk) -1) # 공백 추가 고려
+
+        current_chunk.append(sentence)
+        current_chunk_len += len(sentence) + (1 if len(current_chunk) > 1 else 0) # 문장 사이에 들어갈 공백 길이(1) 고려
+
+    # 마지막 남은 청크 추가
+    if current_chunk:
+        chunks.append(" ".join(current_chunk))
+
+    return chunks
 
 
 def chunk_file_by_line(path: str) ->  List[Dict[str, Any]]:
@@ -16,7 +59,7 @@ def chunk_file_by_line(path: str) ->  List[Dict[str, Any]]:
         with open(path, 'r', encoding='utf-8') as file:
             book_data = json.load(file)
 
-        for index, book in enumerate(book_data):
+        for book_index, book in enumerate(book_data):
             title = book.get('title', '')
             author = book.get('author', '')
             keyword = book.get('keyword', []) 
@@ -24,6 +67,8 @@ def chunk_file_by_line(path: str) ->  List[Dict[str, Any]]:
             image = book.get('image', '')
             introduction = book.get('introduction', '')
             isbn = book.get('isbn', '')
+
+            chunks = initialize_chunk(introduction=introduction, max_chunk_size=30, chunk_overlap=10) # 이후에 조정 필요
 
             meta_data = {
                 "title": title,
@@ -34,12 +79,13 @@ def chunk_file_by_line(path: str) ->  List[Dict[str, Any]]:
                 "isbn": isbn,
             }
 
-            chunk_data = {
-                "chunk_index": index,
-                "introduction": introduction,
+            chunk_data = [{
+                "chunk_index": f"{book_index}-{chunk_index}", # 하나의 책 소개당 여러 개의 청크를 가지므로, 인덱스 여러 개 필요
+                "introduction": chunk,
                 **meta_data
-            }
-            all_chunk_data.append(chunk_data)
+            } for chunk_index, chunk in enumerate(chunks)]
+
+            all_chunk_data.extend(chunk_data)
     except Exception as e:
         print(f"오류 발생: {e}")
 
@@ -77,12 +123,14 @@ if __name__ == "__main__":
         print('='*50)
 
         # 3. Retriever
-        query = "흥미롭고 신비로운 책"
+        query = "내가 한국사를 공부하고 싶은데, 한국사능력검정시험을 공부할 수 있는 책을 추천해줘."
         retrieved_documents = retrieve_chroma(collections, query, num=20)
         print('='*50)
         
         # 4. Reranker
-
+        #reranked_documents = rerank_documents(retrieved_documents, query=query)
+        print('='*50)
+        
         # 5. prompt
 
     except FileNotFoundError:
