@@ -18,8 +18,14 @@ export default function ChatInput({
       <button 
         className="bookmark-button" 
         onClick={() => navigate("/favorites")}
+        title="관심 도서"
       >
-        📚 관심 도서
+        {/* 📚 관심 도서 */}
+         <img
+          src="/favorites.png"
+          alt="관심 도서"
+          className="bookmark-icon"
+        />
       </button>
 
       <input
