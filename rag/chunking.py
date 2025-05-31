@@ -7,6 +7,9 @@ from kiwipiepy import Kiwi
 
 #pip install kiwipiepy
 
+MAX_CHUNK_SIZE = 400 # 300~600자 사이에서 조정 필요 
+CHUNK_OVERLAP = 2 # 1~3 사이에서 조정 필요
+
 kiwi = Kiwi()
 load_dotenv()
 
@@ -33,8 +36,32 @@ def initialize_chunk(introduction: str, max_chunk_size: int, chunk_overlap: int)
     current_chunk_len = 0 # 현재 청크의 문자 길이
 
     for i, sentence in enumerate(sentences):
+        sentence_len = len(sentence) # 현재 문장의 길이 
         # 현재 문장을 추가했을 때의 예상 길이
         expected_len = len(sentence) + (1 if current_chunk else 0)
+
+        # 단일 문장 자체가 max_chunk_size를 넘는 경우, 처리
+        if sentence_len > max_chunk_size:
+            # 현재까지 모은 청크가 있다면 먼저 추가
+            if current_chunk:
+                chunks.append(" ".join(current_chunk))
+                # 기존 청크 비우기
+                current_chunk = []
+                current_chunk_len = 0
+
+            # 긴 문장을 max_chunk_size 단위로 강제로 자르고 다음 청크의 오버랩으로 넘어감
+            start = 0
+            while start < sentence_len:
+                end = min(start + max_chunk_size, sentence_len)
+                sub_chunk = sentence[start:end].strip()
+                if sub_chunk: # 빈 문자열이 아닌 경우에만 추가
+                    chunks.append(sub_chunk)
+                start += max_chunk_size # 다음 시작 인덱스
+                
+            # 긴 문장을 처리했으므로, current_chunk를 비우고 다음 문장으로 넘어감
+            current_chunk = []
+            current_chunk_len = 0
+            continue # 다음 문장으로 넘어감
 
         # 현재 청크에 새 문장을 추가했을 때 max_chunk_size를 초과하는지 확인
         if expected_len + current_chunk_len > max_chunk_size and current_chunk:
@@ -45,10 +72,6 @@ def initialize_chunk(introduction: str, max_chunk_size: int, chunk_overlap: int)
             overlap_sentences = current_chunk[max(0, len(current_chunk) - chunk_overlap):]
             current_chunk = list(overlap_sentences)
             current_chunk_len = sum(len(s) for s in current_chunk) + (len(current_chunk) - 1 if len(current_chunk) > 0 else 0)
-            
-            # 단일 문장 자체가 300자를 넘는 경우, 따로 처리하지 않음
-            if current_chunk_len + expected_len > max_chunk_size:
-                pass 
 
         # 4. 다음 청크는 오버랩 문장들로 시작
         current_chunk.append(sentence)
@@ -77,7 +100,7 @@ def chunk_file_by_line(path: str) ->  List[Dict[str, Any]]:
             introduction = book.get('introduction', '')
             isbn = book.get('isbn', '')
 
-            chunks = initialize_chunk(introduction=introduction, max_chunk_size=600, chunk_overlap=2) # 이후에 조정 필요
+            chunks = initialize_chunk(introduction=introduction, max_chunk_size=MAX_CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP) # 이후에 조정 필요
 
             meta_data = {
                 "title": title,
