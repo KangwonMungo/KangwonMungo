@@ -7,8 +7,9 @@ from kiwipiepy import Kiwi
 
 #pip install kiwipiepy
 
-MAX_CHUNK_SIZE = 400 # 300~600자 사이에서 조정 필요 
+MAX_CHUNK_SIZE = 500 # 300~600자 사이에서 조정 필요 
 CHUNK_OVERLAP = 2 # 1~3 사이에서 조정 필요
+NUM = 10
 
 kiwi = Kiwi()
 load_dotenv()
@@ -32,50 +33,35 @@ def initialize_chunk(introduction: str, max_chunk_size: int, chunk_overlap: int)
     sentences = [s.text.strip() for s in sentences_list if s.text.strip()]
 
     chunks = [] # 모든 청크들이 저장
-    current_chunk = [] # 현재 만들고 있는 하나의 청크에 포함될 문장들이 임시로 저장 
+    current_chunk = [] # 현재 청크를 구성하는 문장들
     current_chunk_len = 0 # 현재 청크의 문자 길이
 
     for i, sentence in enumerate(sentences):
-        sentence_len = len(sentence) # 현재 문장의 길이 
-        # 현재 문장을 추가했을 때의 예상 길이
-        expected_len = len(sentence) + (1 if current_chunk else 0)
+        sentence_len = len(sentence)
 
-        # 단일 문장 자체가 max_chunk_size를 넘는 경우, 처리
-        if sentence_len > max_chunk_size:
-            # 현재까지 모은 청크가 있다면 먼저 추가
+        # 현재 문장을 추가했을 때 max_chunk_size를 초과하는지 확인 및 현재 청크에 문장이 있을 경우, 공백을 추가
+        if current_chunk_len + sentence_len + (1 if current_chunk else 0) > max_chunk_size:
+            # 현재까지 모은 문장들을 하나의 청크로 추가
             if current_chunk:
                 chunks.append(" ".join(current_chunk))
-                # 기존 청크 비우기
+
+            # 이전 문장들을 chunk_overlap 만큼 가져와 다음 청크의 시작으로 사용 (오버랩 처리)
+            overlap_index = max(0, len(current_chunk) - chunk_overlap)
+            current_chunk = list(current_chunk[overlap_index:])
+            current_chunk_len = sum(len(sentence) for sentence in current_chunk) + (len(current_chunk) - 1 if len(current_chunk) > 0 else 0)
+
+        # 단일 문장 자체가 max_chunk_size를 넘는 경우, 해당 문장을 하나의 청크로 처리
+        if sentence_len > max_chunk_size:
+            if current_chunk: # 현재 모아둔 청크가 있다면 먼저 추가하고 초기화
+                chunks.append(" ".join(current_chunk))
                 current_chunk = []
                 current_chunk_len = 0
-
-            # 긴 문장을 max_chunk_size 단위로 강제로 자르고 다음 청크의 오버랩으로 넘어감
-            start = 0
-            while start < sentence_len:
-                end = min(start + max_chunk_size, sentence_len)
-                sub_chunk = sentence[start:end].strip()
-                if sub_chunk: # 빈 문자열이 아닌 경우에만 추가
-                    chunks.append(sub_chunk)
-                start += max_chunk_size # 다음 시작 인덱스
-                
-            # 긴 문장을 처리했으므로, current_chunk를 비우고 다음 문장으로 넘어감
-            current_chunk = []
-            current_chunk_len = 0
+            chunks.append(sentence) # 긴 문장 자체를 하나의 청크로 추가
             continue # 다음 문장으로 넘어감
 
-        # 현재 청크에 새 문장을 추가했을 때 max_chunk_size를 초과하는지 확인
-        if expected_len + current_chunk_len > max_chunk_size and current_chunk:
-            # 2. 현재까지 모은 문장들을 하나의 청크로 추가 (청크 생성)
-            chunks.append(" ".join(current_chunk))
-
-            # 3. 이전 문장들을 chunk_overlap 만큼 가져와 다음 청크의 시작으로 사용 (오버랩 처리)
-            overlap_sentences = current_chunk[max(0, len(current_chunk) - chunk_overlap):]
-            current_chunk = list(overlap_sentences)
-            current_chunk_len = sum(len(s) for s in current_chunk) + (len(current_chunk) - 1 if len(current_chunk) > 0 else 0)
-
-        # 4. 다음 청크는 오버랩 문장들로 시작
+        # 현재 문장 추가
         current_chunk.append(sentence)
-        current_chunk_len += len(sentence) + (1 if len(current_chunk) > 1 else 0) # 단어 사이 공백 추가
+        current_chunk_len += sentence_len + (1 if len(current_chunk) > 1 else 0) # 단어 사이 공백 추가
 
     # 마지막 남은 청크 추가
     if current_chunk:
@@ -155,8 +141,8 @@ if __name__ == "__main__":
         #print('='*50)
 
         # 3. Retriever
-        #query = "긴장감 넘치는 분위기 속 범인 추적과 반전이 있는 추리소설"
-        #retrieved_documents = retrieve_chroma(collections, query, num=20)
+        query = "판타지 소설 추천"
+        #retrieved_documents = retrieve_chroma(collections, query, num=NUM)
         #print('='*50)
         
         # 4. prompt
