@@ -27,7 +27,38 @@ book_preference_extraction_format = """
   "search_trigger": false,
   "generated_response": ""
 }
-"""
+""".strip()
+
+def reset_conversation_history() -> dict:
+    """
+    대화 기록을 초기화하는 함수.
+    Returns:
+        dict: 초기화된 대화 기록 딕셔너리.
+    """
+
+    obj = json.loads(book_preference_extraction_format)
+
+    return obj
+
+def update_conversation_history(origin_conversation_history: dict, new_info: dict) -> dict:
+    """
+    대화 기록에 새로운 정보를 추가하는 함수.
+    Args:
+        origin_conversation_history (dict): 이전 대화 내용 및 추출된 키워드 정보.
+        new_info (dict): 새로 추출된 키워드 정보.
+    """
+
+    # 누적되는 필드
+    for key in ["keywords", "mood", "genre", "theme", "include_titles"]:
+        if key in new_info and new_info[key]:
+            origin_conversation_history[key] = list(set(origin_conversation_history[key]) | set(new_info[key]))
+
+    # 그대로 덮어 쓸 필드
+    for key in ["search_trigger", "generated_response"]:
+        if key in new_info and new_info[key]:
+            origin_conversation_history[key] = new_info[key]
+
+    return origin_conversation_history
 
 def get_keywords_from_llm(user_input: str, conversation_history: dict, model: str) -> dict:
     """
@@ -61,7 +92,7 @@ def get_keywords_from_llm(user_input: str, conversation_history: dict, model: st
     
     return extracted_book_preference_info
 
-def generated_search_query(conversation_history: dict, model: str) -> list:
+def generated_search_query(conversation_history: dict, model: str) -> dict:
     """
     대화 기록을 기반으로 검색 쿼리를 생성.
     Args:
@@ -125,16 +156,8 @@ if __name__ == "__main__":
     model_name = "gemini-2.0-flash"
     client = genai.Client(api_key=api_key)
 
-    # 이전 대화 정보 (초기화)
-    conversation_history = {
-        "keywords": [],
-        "mood": [],
-        "genre": [],
-        "theme": [],
-        "include_titles": [],
-        "search_trigger": False,
-        "generated_response": []
-    }
+    # 대화 정보 초기화
+    conversation_history = reset_conversation_history()
 
     # 사용자 입력을 통해 대화 시작
     while True:
@@ -146,15 +169,8 @@ if __name__ == "__main__":
         # LLM을 통해 키워드 추출
         book_preference_info = get_keywords_from_llm(user_input, conversation_history, model_name)  
         
-        # 누적되는 필드
-        for key in ["keywords", "mood", "genre", "theme", "include_titles"]:
-            if key in book_preference_info:
-                conversation_history[key] = list(set(conversation_history[key]) | set(book_preference_info[key]))
-        
-        # 그대로 덮어 쓸 필드
-        for key in ["search_trigger", "generated_response"]:
-            if key in book_preference_info:
-                conversation_history[key] = book_preference_info[key]
+        # 대화 기록에 추출된 정보 업데이트
+        conversation_history = update_conversation_history(conversation_history, book_preference_info)
 
         # 대화 기록 출력
         print_conversation_history(conversation_history)
@@ -165,7 +181,7 @@ if __name__ == "__main__":
 
             # 1. 뽑아낸 키워드(conversation_history)를 query로 만들기
             search_query = generated_search_query(conversation_history, model_name)
-            print(f"생성된 검색 쿼리:\n{search_query}")
+            print(f"생성된 검색 쿼리:\n{json.dumps(search_query, indent=2, ensure_ascii=False)}")
 
             # 2. search_query를 사용하여 RAG 검색 수행
 
