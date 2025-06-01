@@ -132,18 +132,30 @@ if __name__ == "__main__":
     try:
         # 1. chunking
         all_chunks = chunk_file_by_line(PATH) 
-        # print(f"\n생성된 총 청크(행) 개수: {len(all_chunks)}")
-        # print_all_chunk_data(all_chunks)
-        # print('='*50)
 
         # 2. 벡터 스토어 생성 
-        #collections = store_chroma(all_chunks)
-        #print('='*50)
+        collections = store_chroma(all_chunks)
+        print('='*50)
 
         # 3. Retriever
-        query = "판타지 소설 추천"
-        #retrieved_documents = retrieve_chroma(collections, query, num=NUM)
-        #print('='*50)
+        llm_query = {
+            "query": "살인사건 범인 추적 복수 계획 심리적 갈등 서스펜스 미스터리 추리소설", 
+            "genre_weight": ["미스터리", "추리소설", "스릴러"], 
+            "keyword_weight": ["살인사건", "범인 추적", "복수", "심리적 갈등", "서스펜스", "범죄"]
+        }
+        retrieved_books = retrieve_chroma(collections, llm_query=llm_query, num=NUM)
+        print('='*50)
+
+        if retrieved_books:
+            for book in retrieved_books[:NUM]:
+                print(f"제목: {book.get('title')}")
+                print(f"작가: {book.get('author')}")
+                print(f"키워드: {book.get('keyword')}")
+                print(f"장르: {book.get('genre')}")
+                print(f"대표 소개: {book.get('introduction')[:100]}...")
+                print(f"유사도 거리: {book.get('distance'):.4f}\n")
+        else:
+            print("ChromaDB에서 검색된 책이 없습니다.")
         
         # 4. prompt
 
