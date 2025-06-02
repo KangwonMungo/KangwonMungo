@@ -1,15 +1,20 @@
 import os
 import chromadb
+import time
+
 from dotenv import load_dotenv
 from typing import List, Dict, Any
 from chromadb.utils import embedding_functions
 from chromadb.api.models.Collection import Collection
+from tqdm import tqdm
 
 # pip install chromadb
 # pip install python-dotenv
 # pip install openai
+# pip install tqdm
 
 COLLECTION_NAME = "book_collection"
+BATCH_SIZE = 80 
 
 load_dotenv()
 
@@ -30,25 +35,28 @@ def store_chroma(chunks: List[Dict[str, Any]]):
         api_key=os.getenv("OPENAI_API_KEY"),
         model_name="text-embedding-3-large")
     
-     # 2. 기존 컬렉션 삭제 
-    try: 
-        client.delete_collection(name=COLLECTION_NAME) 
-        print(f"기존 컬렉션 '{COLLECTION_NAME}' 삭제") 
-    except Exception as e: 
-        print(f"기존 컬렉션 삭제 중 오류 발생 {e}") 
-        pass 
+    # 2. 기존 컬렉션이 없으면 생성, 있으면 가져옴
+    try:
+        collections = client.get_collection(
+            name=COLLECTION_NAME,
+            embedding_function=embedding_func,
+        )
+        print(f"기존 컬렉션 '{COLLECTION_NAME}'을 로드했습니다")
+        return collections
     
-    # 3. 기존 컬렉션을 가져오고, 없으면 생성 
-    collections = client.get_or_create_collection(
-        name=COLLECTION_NAME,
-        embedding_function=embedding_func,
-        metadata={"hnsw:space": "cosine"})    
-    
+    except Exception as e:
+        print(f"컬렉션 '{COLLECTION_NAME}'이 존재하지 않아 새로 생성합니다 ({e})")
+        collections = client.create_collection( 
+            name=COLLECTION_NAME,
+            embedding_function=embedding_func,
+            metadata={"hnsw:space": "cosine"}
+        )
+
     documents = []
     metadatas = []
     documents_ids = []
 
-    # 4. 컬렉션에 새로운 documents, metadata를 추가
+    # 컬렉션에 새로운 documents, metadata를 추가
     for chunk in chunks:
         # 'introduction'을 문서 내용으로 사용 
         documents.append(chunk["introduction"])
@@ -57,22 +65,29 @@ def store_chroma(chunks: List[Dict[str, Any]]):
         metadata = chunk.copy()
         del metadata["introduction"]
 
-        # 메타데이터는 리스트 형식이면 안되므로 문자열로 처리           
+         # 메타데이터는 리스트 형식이면 안되므로 문자열로 처리      
         metadata["keyword"] = ", ".join(map(str, metadata.get("keyword", [])))
         metadata["genre"] = ", ".join(map(str, metadata.get("genre", [])))
-
         metadatas.append(metadata)
 
         # ids 값은 문자형이어야 함
         ids = str(chunk["chunk_index"])
         documents_ids.append(ids)
-
-    collections.add(
-        documents=documents,
-        metadatas=metadatas,
-        ids=documents_ids
-    )
-
+    
+    # 배치 단위로 ChromaDB에 추가
+    total_chunks = len(documents)
+    for i in tqdm(range(0, total_chunks, BATCH_SIZE)):
+        try:
+            collections.add(
+                documents=documents[i:i + BATCH_SIZE ],
+                metadatas=metadatas[i:i + BATCH_SIZE ],
+                ids=documents_ids[i:i + BATCH_SIZE ]
+            )
+            print(f"현재 배치에 {len(documents[i:i + BATCH_SIZE])}개 추가 완료")
+            time.sleep(0.1) # 짧은 대기 시간 
+        except Exception as e:
+            print(f"문서 {i} ~ {i + len(documents) - 1} 추가 중 오류 발생: {e}")
+            
     print(f"ChromaDB에 문서 {len(documents)}개 추가 후, 저장 완료")
     
     return collections
@@ -106,6 +121,8 @@ def retrieve_chroma(collection: Collection, llm_query: Dict[str, Any], num: int)
         expanded_query_text += " " + " ".join(f"{g} {g} {g}" for g in genre_weight) 
     if keyword_weight:
         expanded_query_text += " " + " ".join(f"{k} {k}" for k in keyword_weight) 
+    # 최종 expanded_query_text 자체를 한 번 더 추가하여 가중치 부여
+    expanded_query_text += " " + expanded_query_text
 
     # 2. ChromaDB에서 확장된 쿼리로 문서 검색
     results = collection.query(
@@ -143,7 +160,7 @@ def retrieve_chroma(collection: Collection, llm_query: Dict[str, Any], num: int)
                 # 책의 키워드 또는 소개 내용에 키워드가 있다면 가중치 부여
                 if keyword.lower() in book_keyword or \
                    keyword.lower() in book_introduction:
-                    weights -= 0.30 
+                    weights -= 0.10 # 가중치 조정 필요, 기존 0.3 
                     break
 
             final_distance = distance + weights
