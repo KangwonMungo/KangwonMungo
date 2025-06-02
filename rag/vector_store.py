@@ -150,7 +150,7 @@ def retrieve_chroma(collection: Collection, llm_query: Dict[str, Any], num: int)
             book_genre = metadata.get("genre", "").lower()
             for genre in genre_weight:
                 if genre.lower() in book_genre:
-                    weights -= 0.60 
+                    weights -= 0.60 # 가중치 조정 필요, 기존 0.6
                     break
 
             # 키워드 가중치 부여
@@ -160,7 +160,7 @@ def retrieve_chroma(collection: Collection, llm_query: Dict[str, Any], num: int)
                 # 책의 키워드 또는 소개 내용에 키워드가 있다면 가중치 부여
                 if keyword.lower() in book_keyword or \
                    keyword.lower() in book_introduction:
-                    weights -= 0.10 # 가중치 조정 필요, 기존 0.3 
+                    weights -= 0.3 # 가중치 조정 필요, 기존 0.3 
                     break
 
             final_distance = distance + weights
