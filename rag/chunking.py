@@ -132,18 +132,35 @@ if __name__ == "__main__":
     try:
         # 1. chunking
         all_chunks = chunk_file_by_line(PATH) 
-        # print(f"\n생성된 총 청크(행) 개수: {len(all_chunks)}")
-        # print_all_chunk_data(all_chunks)
-        # print('='*50)
 
         # 2. 벡터 스토어 생성 
-        #collections = store_chroma(all_chunks)
-        #print('='*50)
+        collections = store_chroma(all_chunks)
+        print('='*50)
 
         # 3. Retriever
-        query = "판타지 소설 추천"
-        #retrieved_documents = retrieve_chroma(collections, query, num=NUM)
-        #print('='*50)
+        # llm_query = {
+        #     "query": "살인사건을 중심으로 심리적 갈등과 복수라는 어두운 주제를 긴장감 있게 풀어낸 추리 소설", 
+        #     "genre_weight": ["추리소설"], 
+        #     "keyword_weight": ["살인사건", "심리적 갈등", "복수", "추리", "긴장감", "어두움"]
+        # }
+        llm_query = {
+             "query": "차원 이동 능력을 가진 소년 주인공의 판타지 소설", 
+             "genre_weight": ["판타지"], 
+             "keyword_weight": ["우정", "신비로움", "흥미로움", "능력"]
+         }
+        retrieved_books = retrieve_chroma(collections, llm_query=llm_query, num=NUM)
+        print('='*50)
+
+        if retrieved_books:
+            for book in retrieved_books[:NUM]:
+                print(f"제목: {book.get('title')}")
+                print(f"작가: {book.get('author')}")
+                print(f"키워드: {book.get('keyword')}")
+                print(f"장르: {book.get('genre')}")
+                print(f"대표 소개: {book.get('introduction')[:200]}...")
+                print(f"유사도 거리: {book.get('distance'):.4f}\n")
+        else:
+            print("ChromaDB에서 검색된 책이 없습니다.")
         
         # 4. prompt
 
