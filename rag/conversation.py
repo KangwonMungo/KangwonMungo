@@ -1,4 +1,4 @@
-import random
+from typing import Dict, List
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
@@ -9,8 +9,12 @@ from prompts import (
     SYSTEM_PROMPT_FOR_BOOK_PREFERENCE_EXTRACTION,
     SYSTEM_PROMPT_FOR_SEARCH_QUERY_GENERATION,
     USER_PROMPT_FOR_BOOK_PREFERENCE_EXTRACTION,
-    USER_PROMPT_FOR_SEARCH_QUERY_GENERATION
+    USER_PROMPT_FOR_SEARCH_QUERY_GENERATION,
+    SYSTEM_PROMPT_FOR_BOOK_RECOMMENDATION,
+    USER_PROMPT_FOR_BOOK_RECOMMENDATION
 )
+import vector_store
+from chunking import chunk_file_by_line
 
 """
 사용자와의 대화에서 도서 추천에 필요한 정보를 LLM을 통해 추출하고,
@@ -89,8 +93,10 @@ def get_keywords_from_llm(user_input: str, conversation_history: dict, model: st
         ),
     )
     extracted_book_preference_info = json.loads(response.text)
-    
-    return extracted_book_preference_info
+
+    conversation_history = update_conversation_history(conversation_history, extracted_book_preference_info) # 대화 기록 업데이트
+
+    return conversation_history
 
 def generated_search_query(conversation_history: dict, model: str) -> dict:
     """
@@ -150,11 +156,62 @@ def print_conversation_history(conversation_history: dict) -> None:
         print(f"{key}: {value}")
     print("-" * 50)
 
+def get_recommendation(retrieved_books: list, search_query: dict, model: str) -> List[Dict[str, str]]:
+    """
+    사용자에게 추천할 도서에 대한 응답을 생성하는 함수.
+    Args:
+        retrieved_books (list) : 검색된 책 리스트
+        search_query (dict): 사용자 검색 정보
+        model (str): 사용할 Gemini 모델명
+    Returns:
+        list: 추천할 도서의 [제목, 작가, 내용 요약, 추천 이유](dict)를 담은 리스트.
+    """
+    # TODO : 
+    # 1. retrieve_chroma를 MAIN에서 호출
+    # 2. 생성된 retrieved_books를 통해 get_recommendation 호출
+    # 3. get_recommendation에서 반환해야할 것 -> 추천 응답, isbn
+    # 4. 프롬프트 다듬기
+    # 이러닝 과제하기!!!
+
+    prompt = USER_PROMPT_FOR_BOOK_RECOMMENDATION.format(
+        retrieved_books=retrieved_books,
+        search_query=json.dumps(search_query, ensure_ascii=False, indent=2)
+    )
+
+    response = client.models.generate_content(
+        model=model,
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            system_instruction=SYSTEM_PROMPT_FOR_BOOK_RECOMMENDATION,
+            temperature= 0.0,
+            seed=42,
+            cached_content=None,
+            response_mime_type= 'application/json',
+        ),
+    )
+
+    try:
+        recommendation_response = json.loads(response.text)
+    except json.JSONDecodeError:
+        print("추천 결과 파싱 실패. 모델 응답:", response.text)
+        return []
+
+    return recommendation_response
+
 if __name__ == "__main__":
     load_dotenv()
     api_key = os.getenv("GOOGLE_API_KEY")
-    model_name = "gemini-2.0-flash"
     client = genai.Client(api_key=api_key)
+
+    model_name = "gemini-2.0-flash"
+    PATH = "aladin_bestseller.json"
+    NUM = 5  # 추천할 도서의 개수
+
+    # chunking
+    all_chunks = chunk_file_by_line(PATH) 
+
+    # 벡터 스토어 생성 
+    collections = vector_store.store_chroma(all_chunks)
 
     # 대화 정보 초기화
     conversation_history = reset_conversation_history()
@@ -166,23 +223,43 @@ if __name__ == "__main__":
             print("대화를 종료합니다.")
             break
 
-        # LLM을 통해 키워드 추출
+        # LLM을 통해 키워드 추출 및 대화 기록 업데이트
         book_preference_info = get_keywords_from_llm(user_input, conversation_history, model_name)  
-        
-        # 대화 기록에 추출된 정보 업데이트
-        conversation_history = update_conversation_history(conversation_history, book_preference_info)
 
         # 대화 기록 출력
-        print_conversation_history(conversation_history)
+        print_conversation_history(book_preference_info)
+
+        # 검색 시 제외해야 할 책의 isbn을 담은 리스트
+        excluded_titles = []
 
         # 검색 트리거가 활성화된 경우
-        if conversation_history["search_trigger"]:
+        if book_preference_info["search_trigger"]:
             print("검색 트리거가 활성화되었습니다. 도서 검색 쿼리를 만듭니다.")
+            
+            # 제외할 책 목록 가져오기
+            exclude_isbns = []
 
-            # 1. 뽑아낸 키워드(conversation_history)를 query로 만들기
-            search_query = generated_search_query(conversation_history, model_name)
+            # 1. 뽑아낸 키워드(book_preference_info)로 검색 query 생성
+            search_query = generated_search_query(book_preference_info, model_name)
             print(f"생성된 검색 쿼리:\n{json.dumps(search_query, indent=2, ensure_ascii=False)}")
 
-            # 2. search_query를 사용하여 RAG 검색 수행
+            # 2. search_query를 사용하여 RAG 검색 수행 후 검색 결과 가져오기
+            retrieved_books = vector_store.retrieve_chroma(collections, search_query, num=NUM)
+            
+            # 3. 책 추천 응답 생성
+            recommendation_response = get_recommendation(retrieved_books[:NUM], search_query, model_name)
 
-            # 3. 검색 결과를 기반으로 추천 응답 생성
+            # 이미 추천된 책에 대한 isbn 추가하는 것 잊지 말기!
+            # 사용자에게 추천 후 이 isbn이 선호 or 비선호 목록에 들어갈 수도!
+            
+            # 도서 추천 목록 확인
+            print("추천 도서 목록:")
+            print("-" * 50)
+            output = "\n\n".join([
+                f"{idx}. {book.get('title', '제목 없음')} by {book.get('author', '작가 정보 없음')}\n"
+                f"   요약: {book.get('summary', '요약 없음')}\n"
+                f"   추천 이유: {book.get('recommendation', '추천 이유 없음')}"
+                for idx, book in enumerate(recommendation_response, start=1)
+            ])
+            print(output)
+            print("-" * 50)
