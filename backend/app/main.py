@@ -3,16 +3,31 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
 import os
+import sys
 
 from dotenv import load_dotenv
 from google.generativeai import configure, genai
 # Google Generative AI API 설정 
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../rag')))
+
+from service.conversation import *
 load_dotenv()
-
 api_key = os.getenv("GOOGLE_API_KEY")
-genai.configure(api_key=api_key)
+model_name = "gemini-2.0-flash"
+client = genai.Client(api_key=api_key)
 
+
+genai.configure(api_key=api_key)
+conversation_history = {
+        "keywords": [],
+        "mood": [],
+        "genre": [],
+        "theme": [],
+        "include_titles": [],
+        "search_trigger": False,
+        "generated_response": []
+    }
 
 app = FastAPI()
 
@@ -25,11 +40,19 @@ app.add_middleware(
     allow_headers=["*"],  # 모든 요청 헤더 허용
 )
 
-# 임시 저장소
-favorites: List[str] = []
+
 
 class Book(BaseModel):
     title: str
+    author: str
+    keyword: List[str]
+    isbn: str
+    genre: str
+    image_url: str
+    introduction: str
+
+# 임시 저장소
+favorites: List[Book] = []
 
 # 기본 라우트
 @app.get("/")
@@ -42,6 +65,15 @@ async def recommend(request: Request):
     body = await request.json()
     question = body.get("question", "")
     
+    
+    answer = query_to_answer(question)
+    
+    
+    
+    
+    
+    
+    
     # 여기서 실제 추천 로직 수행
     return {
         "response": f"'{question}'에 대해 이런 책을 추천합니다: \n1. 1984\n2. 동물농장\n3. 멋진 신세계"
@@ -50,8 +82,8 @@ async def recommend(request: Request):
 # 관심 도서 추가
 @app.post("/api/favorites")
 def add_favorite(book: Book):
-    if book.title not in favorites:
-        favorites.append(book.title)
+    if book not in favorites:
+        favorites.append(book)
     return {"favorites": favorites}
 
 # 관심 도서 조회
@@ -62,6 +94,27 @@ def get_favorites():
 # 관심 도서 삭제
 @app.delete("/api/favorites")
 def remove_favorite(book: Book):
-    if book.title in favorites:
-        favorites.remove(book.title)
+    if book in favorites:
+        favorites.remove(book)
     return {"favorites": favorites}
+
+
+def query_to_answer(query: str) -> str:
+    book_preference_info = get_keywords_from_llm(query, conversation_history, model_name) 
+
+    # 누적되는 필드
+    for key in ["keywords", "mood", "genre", "theme", "include_titles"]:
+        if key in book_preference_info:
+            conversation_history[key] = list(set(conversation_history[key]) | set(book_preference_info[key]))
+        
+    # 그대로 덮어 쓸 필드
+    for key in ["search_trigger", "generated_response"]:
+        if key in book_preference_info:
+            conversation_history[key] = book_preference_info[key]
+
+
+    if conversation_history["search_trigger"]:
+            search_query = generated_search_query(conversation_history, model_name)
+            #Rag에서 검색된 결과를 가져오는 함수 호출
+    else:
+        return 
