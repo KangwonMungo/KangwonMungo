@@ -166,12 +166,6 @@ def get_recommendation(retrieved_books: list, search_query: dict, model: str) ->
     Returns:
         list: 추천할 도서의 [제목, 작가, 내용 요약, 추천 이유](dict)를 담은 리스트.
     """
-    # TODO : 
-    # 1. retrieve_chroma를 MAIN에서 호출
-    # 2. 생성된 retrieved_books를 통해 get_recommendation 호출
-    # 3. get_recommendation에서 반환해야할 것 -> 추천 응답, isbn
-    # 4. 프롬프트 다듬기
-    # 이러닝 과제하기!!!
 
     prompt = USER_PROMPT_FOR_BOOK_RECOMMENDATION.format(
         retrieved_books=retrieved_books,
@@ -195,6 +189,17 @@ def get_recommendation(retrieved_books: list, search_query: dict, model: str) ->
     except json.JSONDecodeError:
         print("추천 결과 파싱 실패. 모델 응답:", response.text)
         return []
+
+    for rec_response, book in zip(recommendation_response, retrieved_books):
+        isbn = book.get('isbn', '')
+        image = book.get('image', '')
+
+        if isinstance(isbn, tuple) and len(isbn) > 0:
+            rec_response['isbn'] = str(isbn[0])
+        else:
+            rec_response['isbn'] = str(isbn)
+        
+        rec_response['image'] = image
 
     return recommendation_response
 
@@ -229,9 +234,6 @@ if __name__ == "__main__":
         # 대화 기록 출력
         print_conversation_history(book_preference_info)
 
-        # 검색 시 제외해야 할 책의 isbn을 담은 리스트
-        excluded_titles = []
-
         # 검색 트리거가 활성화된 경우
         if book_preference_info["search_trigger"]:
             print("검색 트리거가 활성화되었습니다. 도서 검색 쿼리를 만듭니다.")
@@ -258,7 +260,9 @@ if __name__ == "__main__":
             output = "\n\n".join([
                 f"{idx}. {book.get('title', '제목 없음')} by {book.get('author', '작가 정보 없음')}\n"
                 f"   요약: {book.get('summary', '요약 없음')}\n"
-                f"   추천 이유: {book.get('recommendation', '추천 이유 없음')}"
+                f"   추천 이유: {book.get('recommendation', '추천 이유 없음')}\n"
+                f"   isbn : {book.get('isbn', '')}\n"
+                f"   image_url : {book.get('image', '')}\n"
                 for idx, book in enumerate(recommendation_response, start=1)
             ])
             print(output)
