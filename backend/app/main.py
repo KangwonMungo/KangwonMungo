@@ -6,7 +6,8 @@ import os
 import sys
 
 from dotenv import load_dotenv
-from google.generativeai import configure, genai
+from google.generativeai import configure
+import google.generativeai as genai
 # Google Generative AI API 설정 
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../rag')))
