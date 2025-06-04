@@ -237,13 +237,13 @@ if __name__ == "__main__":
         # 검색 트리거가 활성화된 경우
         if book_preference_info["search_trigger"]:
             print("검색 트리거가 활성화되었습니다. 도서 검색 쿼리를 만듭니다.")
-            
-            # 제외할 책 목록 가져오기
-            exclude_isbns = []
-
+    
             # 1. 뽑아낸 키워드(book_preference_info)로 검색 query 생성
             search_query = generated_search_query(book_preference_info, model_name)
             print(f"생성된 검색 쿼리:\n{json.dumps(search_query, indent=2, ensure_ascii=False)}")
+
+            # 제외할 책 목록 가져오기
+            exclude_isbns = []
 
             # 2. search_query를 사용하여 RAG 검색 수행 후 검색 결과 가져오기
             retrieved_books = vector_store.retrieve_chroma(collections, search_query, num=NUM)

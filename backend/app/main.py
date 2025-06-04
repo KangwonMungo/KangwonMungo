@@ -104,7 +104,8 @@ def remove_favorite(book: Book):
         favorites.remove(book)
     return {"favorites": favorites}
 
-isbns = []
+# 추천된 책들의 ISBN을 저장
+isbns = [] 
 
 def query_to_answer(query: str) -> List[dict]:
     book_preference_info = get_keywords_from_llm(query, conversation_history, model_name) 
@@ -123,7 +124,7 @@ def query_to_answer(query: str) -> List[dict]:
     if book_preference_info["search_trigger"]:
             search_query = generated_search_query(book_preference_info, model_name)
     
-            retrieved_books = vector_store.retrieve_chroma(collections, search_query, num=NUM)
+            retrieved_books = vector_store.retrieve_chroma(collections, search_query, num=NUM, exclude_isbns=isbns)
             
             retrieved_books= retrieved_books[:NUM]
             
