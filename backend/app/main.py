@@ -147,7 +147,7 @@ def query_to_answer(query: str) -> List[dict]:
     
 
     return [{
-        "title": conversation_history["generated_response"],
+        "title": book_preference_info["generated_response"],
         "author": "",
         "summary": "",
         "recommendation": "",
