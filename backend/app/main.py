@@ -1,3 +1,5 @@
+# 터미널에 uvicorn backend.app.main:app --reload
+
 from fastapi import FastAPI,Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -6,10 +8,11 @@ import os
 import sys
 
 from dotenv import load_dotenv
-from google.generativeai import configure, genai
+from google.generativeai import configure
 # Google Generative AI API 설정 
+import google.generativeai as genai
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../rag')))
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../rag')))
 
 
 
@@ -22,7 +25,7 @@ from rag.chunking import chunk_file_by_line
 load_dotenv()
 api_key = os.getenv("GOOGLE_API_KEY")
 model_name = "gemini-2.0-flash"
-client = genai.Client(api_key=api_key)
+#client = genai.client(api_key=api_key)
 
 
 genai.configure(api_key=api_key)
@@ -77,14 +80,6 @@ async def recommend(request: Request):
     #List[dict] 반환
     return query_to_answer(question)
     
-    
-    
-    
-    
-    
-    
-    
-
 # 관심 도서 추가
 @app.post("/api/favorites")
 def add_favorite(book: Book):
@@ -104,7 +99,8 @@ def remove_favorite(book: Book):
         favorites.remove(book)
     return {"favorites": favorites}
 
-isbns = []
+# 추천된 책들의 ISBN을 저장
+isbns = [] 
 
 def query_to_answer(query: str) -> List[dict]:
     book_preference_info = get_keywords_from_llm(query, conversation_history, model_name) 
@@ -121,9 +117,10 @@ def query_to_answer(query: str) -> List[dict]:
     # "generated_response": ""
     
     if book_preference_info["search_trigger"]:
+            print("search_trigger 활성화, 검색 쿼리 생성 시작")
             search_query = generated_search_query(book_preference_info, model_name)
-    
-            retrieved_books = vector_store.retrieve_chroma(collections, search_query, num=NUM)
+            print(f"생성된 검색 쿼리 {search_query}")
+            retrieved_books = vector_store.retrieve_chroma(collections, search_query, num=NUM, exclude_isbns=isbns)
             
             retrieved_books= retrieved_books[:NUM]
             
@@ -137,17 +134,19 @@ def query_to_answer(query: str) -> List[dict]:
 #     "image": "url",
 #   },]
             recommendation_response = get_recommendation(retrieved_books, search_query, model_name)
-
+            print(f"최종 recommendation_response 생성 {recommendation_response}")
             for book in recommendation_response:
                 isbn = book.get("isbn", "")
                 isbns.append(isbn)
            
 
             return recommendation_response
-    
+    else:
+        print("search_trigger' 비활성화, LLM 응답만 반환")
+        print(conversation_history.get("generated_response", "generated_response 없음"))
 
     return [{
-        "title": conversation_history["generated_response"],
+        "title": conversation_history.get("generated_response", "응답 없음"),
         "author": "",
         "summary": "",
         "recommendation": "",

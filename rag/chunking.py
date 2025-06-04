@@ -2,7 +2,7 @@ import json
 
 from dotenv import load_dotenv
 from typing import List, Dict, Any
-from vector_store import store_chroma, retrieve_chroma
+from .vector_store import store_chroma, retrieve_chroma
 from kiwipiepy import Kiwi
 
 #pip install kiwipiepy
@@ -27,7 +27,7 @@ def initialize_chunk(introduction: str, max_chunk_size: int, chunk_overlap: int)
     Returns:
         List[str]: 분리된 청크 리스트
     """
-    # 1. KiwiPyPy를 사용하여 한국어 문장 분리
+    # 1. KiwiPiePy를 사용하여 한국어 문장 분리
     sentences_list = kiwi.split_into_sents(introduction.strip())
     #  Sentence 객체의 실제 텍스트는 .text에 있음 
     sentences = [s.text.strip() for s in sentences_list if s.text.strip()]
@@ -147,8 +147,9 @@ if __name__ == "__main__":
              "query": "차원 이동 능력을 가진 소년 주인공의 판타지 소설", 
              "genre_weight": ["판타지"], 
              "keyword_weight": ["우정", "신비로움", "흥미로움", "능력"]
-         }
-        retrieved_books = retrieve_chroma(collections, llm_query=llm_query, num=NUM)
+        }
+        exclude_isbns = ["9791141600082", "9791173820113"] 
+        retrieved_books = retrieve_chroma(collections, llm_query=llm_query, num=NUM, exclude_isbns=exclude_isbns)
         print('='*50)
 
         if retrieved_books:
