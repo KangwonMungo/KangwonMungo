@@ -93,7 +93,7 @@ def store_chroma(chunks: List[Dict[str, Any]]):
     return collections
 
 
-def retrieve_chroma(collection: Collection, llm_query: Dict[str, Any], num: int) -> List[Dict[str, Any]]:
+def retrieve_chroma(collection: Collection, llm_query: Dict[str, Any], num: int, exclude_isbns: List[str] = None) -> List[Dict[str, Any]]:
     """
     ChromaDB에서 LLM이 생성한 쿼리 정보를 사용하여 유사한 문서를 검색
     중복을 제거하여 책 단위로 반환하며, 장르/키워드 가중치를 부여
@@ -102,6 +102,7 @@ def retrieve_chroma(collection: Collection, llm_query: Dict[str, Any], num: int)
         collection (Collection): 데이터가 저장된 ChromaDB 컬렉션
         llm_query (Dict[str, Any]): LLM이 생성한 검색 쿼리 정보
         num (int): 추천할 책의 개수
+        exclude_isbns (List[str]) : 검색에서 제외할 책의 ISBN 리스트
     
     Returns:
         List[Dict[str, Any]]: 검색된 책 정보 리스트
@@ -113,6 +114,8 @@ def retrieve_chroma(collection: Collection, llm_query: Dict[str, Any], num: int)
     if not query_text:
         print("LLM이 생성한 쿼리가 존재하지 않습니다")
         return []
+    if exclude_isbns is None:
+        exclude_isbns = []
 
     # 1. 쿼리 확장: LLM이 생성한 쿼리 + 장르 + 키워드를 모두 포함시켜 임베딩 정확도를 높임
     expanded_query_text = query_text
@@ -142,6 +145,9 @@ def retrieve_chroma(collection: Collection, llm_query: Dict[str, Any], num: int)
             isbn = metadata.get("isbn")
             if not isbn:
                 continue
+            # 제외 목록에 있는 ISBN이 검색 결과에 포함된 경우, 건너뜀
+            if isbn in exclude_isbns: 
+                continue  
 
             # 3. 메타데이터 기반 가중치 조정 
             weights = 0.0
