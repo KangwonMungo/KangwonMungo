@@ -2,7 +2,7 @@ import json
 
 from dotenv import load_dotenv
 from typing import List, Dict, Any
-from vector_store import store_chroma, retrieve_chroma
+from .vector_store import store_chroma, retrieve_chroma
 from kiwipiepy import Kiwi
 
 #pip install kiwipiepy
