@@ -19,7 +19,7 @@ export default function ChatMessage({ sender, text }: Props) {
     return (
         <div className={`chat-message ${sender}`}>
           <div className="chat-avatar-container">
-            <img src={avatarSrc} alt="avatar" className="chat-avatar" />
+            {/* <img src={avatarSrc} alt="avatar" className="chat-avatar" /> */}
           </div>
           <div className={`chat-bubble ${sender}`}>
             <div className="chat-text">
@@ -37,7 +37,7 @@ export default function ChatMessage({ sender, text }: Props) {
   return (
       <div className={`chat-message ${sender}`}>
         <div className="chat-avatar-container">
-          <img src={avatarSrc} alt="avatar" className="chat-avatar" />
+          {/* <img src={avatarSrc} alt="avatar" className="chat-avatar" /> */}
         </div>
         <div className={`chat-bubble ${sender}`}>
         <div className="chat-text">{text}</div>

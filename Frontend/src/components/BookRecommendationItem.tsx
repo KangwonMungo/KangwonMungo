@@ -27,7 +27,11 @@ export default function BookRecommendationItem({ title }: Props) {
           onClick={toggleLike}
           title="찜한 목록으로 가기"
         >
-          {liked ? "❤️" : "🤍"}
+          <img
+            src={liked ? "/heart-filled.png" : "/heart-outline.png"}
+            alt="찜하기"
+            className="heart-img"
+          />
         </button>
         <button
           className="uninterested-button"
