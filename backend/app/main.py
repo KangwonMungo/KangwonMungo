@@ -1,6 +1,6 @@
 # 터미널에 uvicorn backend.app.main:app --reload
 
-from fastapi import FastAPI,Request
+from fastapi import FastAPI,Request, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
@@ -94,9 +94,9 @@ def get_favorites():
 
 # 관심 도서 삭제
 @app.delete("/api/favorites")
-def remove_favorite(book: Book):
-    if book in favorites:
-        favorites.remove(book)
+def remove_favorite(title: str = Query(...)):
+    global favorites
+    favorites = [book for book in favorites if book.title != title]
     return {"favorites": favorites}
 
 # 추천된 책들의 ISBN을 저장
