@@ -10,6 +10,7 @@
   position: relative;
   -webkit-border-radius: 20px;
   -moz-border-radius: 20px;
+  background-color: white;
 }
 .chat-bubble.user {
   align-self: flex-end;
@@ -52,3 +53,28 @@
 .chat-text {
   word-break: break-word;
 }
+
+.chat-message {
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 0.8rem;
+  position: relative;
+}
+
+.chat-message.user {
+  flex-direction: row-reverse;
+}
+
+.chat-avatar {
+  width: 36px;
+  height: 36px;
+  margin: 0 0.5rem;
+  object-fit: cover;
+  border-radius: 45%;
+}
+.chat-avatar-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+

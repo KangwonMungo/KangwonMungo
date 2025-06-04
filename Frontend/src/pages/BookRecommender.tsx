@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useState , useRef, useEffect} from "react";
 import axios from "axios";
-
 import ChatMessage from "../components/ChatMessage";
 import ChatInput from "../components/ChatInput";
 import "./BookRecommender.css";
@@ -16,12 +15,12 @@ export default function BookRecommender({
   setMessages,
 }: BookRecommenderProps) {
   const [input, setInput] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null); // 스크롤 ref
 
   const handleSend = async () => {
     if (!input.trim()) return;
 
     const userMessage: Message = { sender: "user", text: input };
-
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
 
@@ -61,6 +60,10 @@ export default function BookRecommender({
     }
   };
 
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({ behavior: "smooth"});
+  }, [messages]);
+
   return (
     <div className="chat-container">
       <div className="chat-panel">
@@ -69,6 +72,7 @@ export default function BookRecommender({
 
             <ChatMessage key={idx} sender={msg.sender} text={msg.text} />
           ))}
+          <div ref={scrollRef} />
         </div>
 
         <ChatInput
