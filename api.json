@@ -1,0 +1,162 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Book Recommendation API",
+    "version": "1.0.0",
+    "description": "도서 추천 및 관심 도서 관리용 FastAPI 백엔드"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000"
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "서버 상태 확인",
+        "responses": {
+          "200": {
+            "description": "서버 작동 메시지",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "FastAPI 백엔드가 정상적으로 작동합니다!"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recommend": {
+      "post": {
+        "summary": "질문을 기반으로 도서 추천",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "question": { "type": "string" }
+                }
+              },
+              "example": {
+                "question": "감성적인 분위기의 책 추천해줘"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "추천 도서 목록",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Book" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/favorites": {
+      "get": {
+        "summary": "관심 도서 목록 조회",
+        "responses": {
+          "200": {
+            "description": "관심 도서 배열",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "favorites": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Book" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "관심 도서 추가",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Book" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "업데이트된 관심 도서 목록",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "favorites": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Book" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "관심 도서 삭제",
+        "parameters": [
+          {
+            "name": "title",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "업데이트된 관심 도서 목록",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "favorites": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Book" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Book": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string" },
+          "author": { "type": "string" },
+          "summary": { "type": "string" },
+          "recommendation": { "type": "string" },
+          "isbn": { "type": "string" },
+          "image": { "type": "string", "format": "uri" }
+        }
+      }
+    }
+  }
+}

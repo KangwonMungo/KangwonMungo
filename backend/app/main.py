@@ -115,6 +115,10 @@ def query_to_answer(query: str) -> List[dict]:
     # "include_titles": [],
     # "search_trigger": false,
     # "generated_response": ""
+    for book in favorites:
+        if book.genre:
+            book_preference_info["genre"].append(book.genre)
+
     
     if book_preference_info["search_trigger"]:
             print("search_trigger 활성화, 검색 쿼리 생성 시작")
