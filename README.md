@@ -10,8 +10,7 @@ cd KANGWONMUNGO/Frontend
 npm run dev
 
 # 백엔드 서버 실행
-cd KANGWONMUNGO/backend
-uvicorn app.main:app --reload
+uvicorn backend.app.main:app --reload
 
 # 서버 중단
 ctrl + c
