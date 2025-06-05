@@ -1,34 +1,50 @@
 import "./ChatMessage.css"
 import BookRecommendationItem from "./BookRecommendationItem";
 
+interface Book {
+  title: string;
+  author: string;
+  summary: string;
+  recommendation: string;
+  isbn: string;
+  image: string;
+}
+
 interface Props {
   sender: "user" | "bot";
   text: string;
+  bookList?: Book[]; // 
 }
 
-export default function ChatMessage({ sender, text }: Props) {
-  if (sender === "bot" && text.includes("1.")) {
-    // 추천 메시지인 경우 파싱하여 BookRecommendationItem으로 출력
-    const lines = text.split("\n").filter((line) => line.trim() !== "");
-    const header = lines[0];
-    const items = lines.slice(1);
+export default function ChatMessage({ sender, text, bookList }: Props) {
+  const isBot = sender === "bot";
 
+  const isRecommendation = sender === "bot" && bookList && bookList.length > 0;
+  
+  if (isRecommendation) {
     return (
-        <div className={`chat-bubble ${sender}`}>
-          <div className="chat-text">
-            <div style={{ marginBottom: "0.5rem" }}>{header}</div>
-            {items.map((line, idx) => (
-              <BookRecommendationItem key={idx} title={line} />
+        <div className={`chat-message ${sender}`}>
+          <div className={`chat-bubble ${sender}`}>
+            <div className="chat-text">
+              <div style={{ marginBottom: "0.5rem" }}>{text}</div>
+
+
+              {isRecommendation &&
+              bookList!.map((book, idx) => (
+              <BookRecommendationItem key={idx} book={book} />
             ))}
           </div>
         </div>
+      </div>
     );
   }
 
   // 일반 메시지 출력
   return (
-      <div className={`chat-bubble ${sender}`}>
+      <div className={`chat-message ${sender}`}>
+        <div className={`chat-bubble ${sender}`}>
         <div className="chat-text">{text}</div>
       </div>
+    </div>
   );
 }

@@ -1,18 +1,44 @@
-from fastapi import FastAPI,Request
+# 터미널에 uvicorn backend.app.main:app --reload
+
+from fastapi import FastAPI,Request, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
 import os
+import sys
 
 from dotenv import load_dotenv
-from google.generativeai import configure, genai
+from google.generativeai import configure
 # Google Generative AI API 설정 
+import google.generativeai as genai
+
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../rag')))
+
+
+
+from rag.conversation import get_keywords_from_llm, generated_search_query, reset_conversation_history, get_recommendation
+from rag import vector_store
+from rag.chunking import chunk_file_by_line
+
+ 
 
 load_dotenv()
-
 api_key = os.getenv("GOOGLE_API_KEY")
-genai.configure(api_key=api_key)
+model_name = "gemini-2.0-flash"
+#client = genai.client(api_key=api_key)
 
+
+genai.configure(api_key=api_key)
+conversation_history = reset_conversation_history()
+
+PATH = "aladin_bestseller.json"
+NUM = 5  # 추천할 도서의 개수
+
+# chunking
+all_chunks = chunk_file_by_line(PATH)
+
+# 벡터 스토어 생성
+collections = vector_store.store_chroma(all_chunks)
 
 app = FastAPI()
 
@@ -25,11 +51,19 @@ app.add_middleware(
     allow_headers=["*"],  # 모든 요청 헤더 허용
 )
 
-# 임시 저장소
-favorites: List[str] = []
+
 
 class Book(BaseModel):
     title: str
+    author: str
+    keyword: List[str]
+    isbn: str
+    genre: str
+    image_url: str
+    introduction: str
+
+# 임시 저장소
+favorites: List[Book] = []
 
 # 기본 라우트
 @app.get("/")
@@ -42,16 +76,15 @@ async def recommend(request: Request):
     body = await request.json()
     question = body.get("question", "")
     
-    # 여기서 실제 추천 로직 수행
-    return {
-        "response": f"'{question}'에 대해 이런 책을 추천합니다: \n1. 1984\n2. 동물농장\n3. 멋진 신세계"
-    }
-
+    
+    #List[dict] 반환
+    return query_to_answer(question)
+    
 # 관심 도서 추가
 @app.post("/api/favorites")
 def add_favorite(book: Book):
-    if book.title not in favorites:
-        favorites.append(book.title)
+    if book not in favorites:
+        favorites.append(book)
     return {"favorites": favorites}
 
 # 관심 도서 조회
@@ -61,7 +94,62 @@ def get_favorites():
 
 # 관심 도서 삭제
 @app.delete("/api/favorites")
-def remove_favorite(book: Book):
-    if book.title in favorites:
-        favorites.remove(book.title)
+def remove_favorite(title: str = Query(...)):
+    global favorites
+    favorites = [book for book in favorites if book.title != title]
     return {"favorites": favorites}
+
+# 추천된 책들의 ISBN을 저장
+isbns = [] 
+
+def query_to_answer(query: str) -> List[dict]:
+    book_preference_info = get_keywords_from_llm(query, conversation_history, model_name) 
+
+   
+
+
+    # "keywords": [],
+    # "mood": [],
+    # "genre": [],
+    # "theme": [],
+    # "include_titles": [],
+    # "search_trigger": false,
+    # "generated_response": ""
+    
+    if book_preference_info["search_trigger"]:
+            print("search_trigger 활성화, 검색 쿼리 생성 시작")
+            search_query = generated_search_query(book_preference_info, model_name)
+            print(f"생성된 검색 쿼리 {search_query}")
+            retrieved_books = vector_store.retrieve_chroma(collections, search_query, num=NUM, exclude_isbns=isbns)
+            
+            retrieved_books= retrieved_books[:NUM]
+            
+
+#             [{
+#     "title": "어린 왕자",
+#     "author": "앙투안 드 생텍쥐페리",
+#     "summary": "사막에 불시착한 조종사가 만난 어린 왕자와의 철학적인 이야기...",
+#     "recommendation": "순수함과 인생에 대한 통찰을 동시에 느낄 수 있는 작품입니다.",
+#     "isbn": "9788952759600",
+#     "image": "url",
+#   },]
+            recommendation_response = get_recommendation(retrieved_books, search_query, model_name)
+            print(f"최종 recommendation_response 생성 {recommendation_response}")
+            for book in recommendation_response:
+                isbn = book.get("isbn", "")
+                isbns.append(isbn)
+           
+
+            return recommendation_response
+    else:
+        print("search_trigger' 비활성화, LLM 응답만 반환")
+        print(conversation_history.get("generated_response", "generated_response 없음"))
+
+    return [{
+        "title": conversation_history.get("generated_response", "응답 없음"),
+        "author": "",
+        "summary": "",
+        "recommendation": "",
+        "isbn": "",
+        "image": "",
+    }]

@@ -4,6 +4,12 @@ import axios from "axios";
 // 관심 도서 타입
 export interface FavoriteBook {
   title: string;
+  author: string;
+  isbn: string;
+  genre: string;
+  image_url: string;
+  introduction: string;
+  keyword: string[];
 }
 
 // context 타입
@@ -25,7 +31,8 @@ export function FavoriteProvider({ children }: { children: ReactNode }) {
       .get("http://localhost:8000/api/favorites")
       .then((res) => {
         const titles = res.data.favorites as string[];
-        setFavorites(titles.map((title) => ({ title })));
+        // setFavorites(titles.map((title) => ({ title })));
+        setFavorites(res.data.favorites);
       })
       .catch((err) => console.error("관심 도서 불러오기 실패", err));
   }, []);
@@ -34,8 +41,7 @@ export function FavoriteProvider({ children }: { children: ReactNode }) {
   const addFavorite = async (book: FavoriteBook) => {
     try {
       const res = await axios.post("http://localhost:8000/api/favorites", book);
-      const titles = res.data.favorites as string[];
-      setFavorites(titles.map((title) => ({ title })));
+      setFavorites(res.data.favorites);
     } catch (err) {
       console.error("관심 도서 추가 실패", err);
     }
@@ -45,10 +51,10 @@ export function FavoriteProvider({ children }: { children: ReactNode }) {
   const removeFavorite = async (title: string) => {
     try {
       const res = await axios.delete("http://localhost:8000/api/favorites", {
-        data: { title },
+        params: { title },
       });
-      const titles = res.data.favorites as string[];
-      setFavorites(titles.map((title) => ({ title })));
+      // setFavorites(titles.map((title) => ({ title })));
+      setFavorites(res.data.favorites);
     } catch (err) {
       console.error("관심 도서 삭제 실패", err);
     }

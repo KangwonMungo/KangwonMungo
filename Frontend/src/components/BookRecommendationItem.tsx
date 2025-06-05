@@ -1,33 +1,57 @@
-import { useFavorites } from "../context/FavoriteContext";
+import { FavoriteBook, useFavorites } from "../context/FavoriteContext";
 import "./BookRecommendationItem.css";
 
 interface Props {
-  title: string;
+  book: {
+    title: string;
+    author: string;
+    summary: string;
+    recommendation: string;
+    isbn: string;
+    image: string;
+  };
 }
 
-export default function BookRecommendationItem({ title }: Props) {
+export default function BookRecommendationItem({ book }: Props) {
+  if (!book) return null;
+
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
-  const liked = isFavorite(title);
+  const liked = isFavorite(book.title);
 
   const toggleLike = () => {
-    liked ? removeFavorite(title) : addFavorite({ title });
-  };
+  liked 
+    ? removeFavorite(book.title) 
+    : addFavorite({
+      title: book.title,
+      author: book.author,
+      isbn: book.isbn,
+      genre: "",
+      image_url: book.image,
+      introduction: book.summary,
+      keyword: [] 
+  });
+};
 
   const markAsUninterested = () => {
-    removeFavorite(title); // 관심 목록에서 제거
-    alert(`'${title}'을(를) 관심없음으로 표시했습니다.`);
+    removeFavorite(book.title); // 관심 목록에서 제거
+    alert(`'${book.title}'을(를) 관심없음으로 표시했습니다.`);
   };
 
   return (
     <div className="book-item">
-      <div className="book-title">{title}</div>
+      {/*<img src={book.image} alt={book.title} className="book-image" />*/}
+      <div className="book-title">{book.title}</div>
       <div style={{ display: "flex", gap: "0.5rem" }}>
         <button
           className="heart-icon"
           onClick={toggleLike}
           title="찜한 목록으로 가기"
         >
-          {liked ? "❤️" : "🤍"}
+          <img
+            src={liked ? "/heart-filled.png" : "/heart-outline.png"}
+            alt="찜하기"
+            className="heart-img"
+          />
         </button>
         <button
           className="uninterested-button"
