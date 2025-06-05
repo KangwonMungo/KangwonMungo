@@ -4,6 +4,8 @@ from google.genai import types
 from dotenv import load_dotenv
 import os
 import json
+from sklearn.feature_extraction.text import TfidfVectorizer
+from collections import defaultdict, Counter
 
 from prompts import (
     SYSTEM_PROMPT_FOR_BOOK_PREFERENCE_EXTRACTION,
@@ -27,7 +29,6 @@ book_preference_extraction_format = """
   "mood": [],
   "genre": [],
   "theme": [],
-  "include_titles": [],
   "search_trigger": false,
   "generated_response": ""
 }
@@ -164,7 +165,7 @@ def get_recommendation(retrieved_books: list, search_query: dict, model: str) ->
         search_query (dict): 사용자 검색 정보
         model (str): 사용할 Gemini 모델명
     Returns:
-        list: 추천할 도서의 [제목, 작가, 내용 요약, 추천 이유](dict)를 담은 리스트.
+        list: 추천할 도서의 [제목, 작가, 내용 요약, 추천 이유, isbn, 장르, image_url](dict)를 담은 리스트.
     """
 
     prompt = USER_PROMPT_FOR_BOOK_RECOMMENDATION.format(
@@ -193,15 +194,25 @@ def get_recommendation(retrieved_books: list, search_query: dict, model: str) ->
     for rec_response, book in zip(recommendation_response, retrieved_books):
         isbn = book.get('isbn', '')
         image = book.get('image', '')
+        genre = book.get('genre', '')
 
-        if isinstance(isbn, tuple) and len(isbn) > 0:
-            rec_response['isbn'] = str(isbn[0])
+        if isinstance(isbn, tuple):
+            rec_response['isbn'] = str(isbn[0]) if isbn else ''
         else:
             rec_response['isbn'] = str(isbn)
-        
+
+        rec_response['genre'] = genre.split(",")[0].strip() if genre else ''
         rec_response['image'] = image
 
     return recommendation_response
+
+def add_genre_to_conversation_history(origin_conversation_history: dict, new_info: dict) -> dict:
+    """
+    대화 기록에 새로운 정보를 추가하는 함수.
+    Args:
+        origin_conversation_history (dict): 이전 대화 내용 및 추출된 키워드 정보.
+        new_info (dict): 새로 추출된 키워드 정보.
+    """
 
 if __name__ == "__main__":
     load_dotenv()
@@ -240,19 +251,16 @@ if __name__ == "__main__":
             
             # 제외할 책 목록 가져오기
             exclude_isbns = []
-
+            
             # 1. 뽑아낸 키워드(book_preference_info)로 검색 query 생성
             search_query = generated_search_query(book_preference_info, model_name)
             print(f"생성된 검색 쿼리:\n{json.dumps(search_query, indent=2, ensure_ascii=False)}")
 
             # 2. search_query를 사용하여 RAG 검색 수행 후 검색 결과 가져오기
             retrieved_books = vector_store.retrieve_chroma(collections, search_query, num=NUM)
-            
+
             # 3. 책 추천 응답 생성
             recommendation_response = get_recommendation(retrieved_books[:NUM], search_query, model_name)
-
-            # 이미 추천된 책에 대한 isbn 추가하는 것 잊지 말기!
-            # 사용자에게 추천 후 이 isbn이 선호 or 비선호 목록에 들어갈 수도!
             
             # 도서 추천 목록 확인
             print("추천 도서 목록:")
@@ -263,6 +271,7 @@ if __name__ == "__main__":
                 f"   추천 이유: {book.get('recommendation', '추천 이유 없음')}\n"
                 f"   isbn : {book.get('isbn', '')}\n"
                 f"   image_url : {book.get('image', '')}\n"
+                f"   genre : {book.get('genre','')}"
                 for idx, book in enumerate(recommendation_response, start=1)
             ])
             print(output)
