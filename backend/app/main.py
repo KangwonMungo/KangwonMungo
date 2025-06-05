@@ -115,6 +115,10 @@ def query_to_answer(query: str) -> List[dict]:
     # "include_titles": [],
     # "search_trigger": false,
     # "generated_response": ""
+    for book in favorites:
+        if book.genre:
+            book_preference_info["genre"].append(book.genre)
+
     
     if book_preference_info["search_trigger"]:
             print("search_trigger 활성화, 검색 쿼리 생성 시작")
@@ -143,10 +147,11 @@ def query_to_answer(query: str) -> List[dict]:
             return recommendation_response
     else:
         print("search_trigger' 비활성화, LLM 응답만 반환")
-        print(conversation_history.get("generated_response", "generated_response 없음"))
+        print(book_preference_info.get("generated_response", "generated_response 없음"))
 
     return [{
-        "title": conversation_history.get("generated_response", "응답 없음"),
+
+        "title": book_preference_info["generated_response"],
         "author": "",
         "summary": "",
         "recommendation": "",
