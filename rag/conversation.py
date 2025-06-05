@@ -276,3 +276,8 @@ if __name__ == "__main__":
             ])
             print(output)
             print("-" * 50)
+
+import multiprocessing
+
+if __name__ == "__main__":
+    multiprocessing.freeze_support()
