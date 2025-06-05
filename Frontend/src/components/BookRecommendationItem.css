@@ -52,3 +52,24 @@
 .heart-icon:hover .heart-img {
   transform: scale(1.1);
 }
+
+.book-details {
+  margin-top: 0.5rem;
+  background-color: #f9f9f9;
+  padding: 0.75rem;
+  border-radius: 8px;
+}
+
+.book-image {
+  max-width: 100px;
+  height: auto;
+  margin-bottom: 0.5rem;
+}
+
+.more-button {
+  background-color: #e0e0e0;
+  border: none;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+}

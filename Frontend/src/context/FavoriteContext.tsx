@@ -1,16 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import axios from "axios";
-
-// 관심 도서 타입
-export interface FavoriteBook {
-  title: string;
-  author: string;
-  isbn: string;
-  genre: string;
-  image_url: string;
-  introduction: string;
-  keyword: string[];
-}
+import {FavoriteBook} from "../../types";
 
 // context 타입
 interface FavoriteContextType {
