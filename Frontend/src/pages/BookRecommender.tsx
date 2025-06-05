@@ -3,7 +3,9 @@ import axios from "axios";
 import ChatMessage from "../components/ChatMessage";
 import ChatInput from "../components/ChatInput";
 import "./BookRecommender.css";
-import { Message } from "../App";
+// import { Message } from "../App";
+import { Message } from "../../types";
+
 
 interface BookRecommenderProps {
   messages: Message[];

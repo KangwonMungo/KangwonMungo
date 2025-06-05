@@ -1,15 +1,12 @@
-import { FavoriteBook, useFavorites } from "../context/FavoriteContext";
+import { useState } from "react";
+import { useFavorites } from "../context/FavoriteContext";
 import "./BookRecommendationItem.css";
+import BookDetailModal from "./BookDetailModal"
+import { Book } from "../../types"
+
 
 interface Props {
-  book: {
-    title: string;
-    author: string;
-    summary: string;
-    recommendation: string;
-    isbn: string;
-    image: string;
-  };
+  book: Book;
 }
 
 export default function BookRecommendationItem({ book }: Props) {
@@ -17,6 +14,7 @@ export default function BookRecommendationItem({ book }: Props) {
 
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
   const liked = isFavorite(book.title);
+  const [showModal, setShowModal] = useState(false); // Modal
 
   const toggleLike = () => {
   liked 
@@ -28,18 +26,13 @@ export default function BookRecommendationItem({ book }: Props) {
       genre: "",
       image_url: book.image,
       introduction: book.summary,
-      keyword: [] 
+      keyword: [],
+      recommendation: book.recommendation,
   });
 };
 
-  const markAsUninterested = () => {
-    removeFavorite(book.title); // 관심 목록에서 제거
-    alert(`'${book.title}'을(를) 관심없음으로 표시했습니다.`);
-  };
-
   return (
     <div className="book-item">
-      {/*<img src={book.image} alt={book.title} className="book-image" />*/}
       <div className="book-title">{book.title}</div>
       <div style={{ display: "flex", gap: "0.5rem" }}>
         <button
@@ -53,13 +46,14 @@ export default function BookRecommendationItem({ book }: Props) {
             className="heart-img"
           />
         </button>
-        <button
-          className="uninterested-button"
-          onClick={markAsUninterested}
-        >
-          관심없음
+        <button className="more-button" onClick={() => setShowModal(true)}>
+          상세 보기
         </button>
       </div>
+
+      {showModal && (
+        <BookDetailModal book={book} onClose={() => setShowModal(false)} />
+      )}
     </div>
   );
 }
