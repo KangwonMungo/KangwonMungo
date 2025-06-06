@@ -1,5 +1,3 @@
-# 터미널에 uvicorn backend.app.main:app --reload
-
 from fastapi import FastAPI,Request, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -8,15 +6,14 @@ import os
 import sys
 
 from dotenv import load_dotenv
-from google.generativeai import configure
-# Google Generative AI API 설정 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 # sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../rag')))
 
 
 
-from rag.conversation import get_keywords_from_llm, generated_search_query, reset_conversation_history, get_recommendation
+from rag.conversation import ConversationService, reset_conversation_history
 from rag import vector_store
 from rag.chunking import chunk_file_by_line
 
@@ -25,10 +22,9 @@ from rag.chunking import chunk_file_by_line
 load_dotenv()
 api_key = os.getenv("GOOGLE_API_KEY")
 model_name = "gemini-2.0-flash"
-#client = genai.client(api_key=api_key)
+client = genai.Client(api_key=api_key)
 
-
-genai.configure(api_key=api_key)
+conversation_service = ConversationService(client, model_name)
 conversation_history = reset_conversation_history()
 
 PATH = "aladin_bestseller.json"
@@ -103,7 +99,7 @@ def remove_favorite(title: str = Query(...)):
 isbns = [] 
 
 def query_to_answer(query: str) -> List[dict]:
-    book_preference_info = get_keywords_from_llm(query, conversation_history, model_name) 
+    book_preference_info = conversation_service.get_keywords_from_llm(query, conversation_history) 
 
    
 
@@ -112,7 +108,6 @@ def query_to_answer(query: str) -> List[dict]:
     # "mood": [],
     # "genre": [],
     # "theme": [],
-    # "include_titles": [],
     # "search_trigger": false,
     # "generated_response": ""
     for book in favorites:
@@ -122,7 +117,7 @@ def query_to_answer(query: str) -> List[dict]:
     
     if book_preference_info["search_trigger"]:
             print("search_trigger 활성화, 검색 쿼리 생성 시작")
-            search_query = generated_search_query(book_preference_info, model_name)
+            search_query = conversation_service.generate_search_query(book_preference_info)
             print(f"생성된 검색 쿼리 {search_query}")
             retrieved_books = vector_store.retrieve_chroma(collections, search_query, num=NUM, exclude_isbns=isbns)
             
@@ -137,7 +132,7 @@ def query_to_answer(query: str) -> List[dict]:
 #     "isbn": "9788952759600",
 #     "image": "url",
 #   },]
-            recommendation_response = get_recommendation(retrieved_books, search_query, model_name)
+            recommendation_response = conversation_service.get_recommendation(retrieved_books, search_query)
             print(f"최종 recommendation_response 생성 {recommendation_response}")
             for book in recommendation_response:
                 isbn = book.get("isbn", "")
