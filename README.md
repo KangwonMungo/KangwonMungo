@@ -5,6 +5,13 @@
 npm install
 pip install axios fastapi pydantic
 
+pip install python-dotenv
+pip install kiwipiepy
+pip install chromadb
+pip install openai
+pip install tqdm
+
+
 # 로컬 서버 실행
 cd KANGWONMUNGO/Frontend
 npm run dev

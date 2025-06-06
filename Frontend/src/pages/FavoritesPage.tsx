@@ -21,8 +21,8 @@ export default function FavoritesPage() {
 
                 <div className="favorites-book-details">
                   <h3>{book.title}</h3>
-                  <p><strong>작가:</strong> {book.author}</p>
-                  <p><strong>요약:</strong> {book.introduction}</p>
+                  <p><strong>작가</strong>: {book.author}</p>
+                  <p><strong>요약</strong>: {book.introduction}</p>
                 <button
                   className="favorites-remove-btn"
                   onClick={() => removeFavorite(book.title)}
@@ -36,7 +36,7 @@ export default function FavoritesPage() {
       )}
       <div className="favorites-back-wrapper">
         <button className="favorites-back-btn" onClick={() => window.history.back()}>
-          🔙 돌아가기
+          🔙
         </button>
       </div>
       </div>

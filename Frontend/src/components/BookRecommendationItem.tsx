@@ -47,7 +47,7 @@ export default function BookRecommendationItem({ book }: Props) {
           />
         </button>
         <button className="more-button" onClick={() => setShowModal(true)}>
-          상세 보기
+          <img src="/search.png" alt="상세 보기" className="button-icon" />
         </button>
       </div>
 
