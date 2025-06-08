@@ -22,7 +22,7 @@ export default function ChatInput({
       >
         {/* 📚 관심 도서 */}
          <img
-          src="/favorites.png"
+          src="/favorites_yellow.png"
           alt="관심 도서"
           className="bookmark-icon"
         />

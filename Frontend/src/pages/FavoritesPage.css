@@ -6,6 +6,7 @@
   background-color: #BDE3DA;
   height: 100vh;
   width: 100vw;
+  font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif
 }
 
 .favorites-card {
@@ -19,13 +20,12 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   width: 100%;
   max-width: 640px;
-  font-weight: bold;
 }
 
 .favorites-title {
   text-align: center;
   font-size: 1.5rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.4rem;
 }
 
 .favorites-list {
@@ -59,6 +59,7 @@
   border: 1px solid #aaa;
   border-radius: 6px;
   cursor: pointer;
+  background-color: white;
 }
 
 .favorites-book-image {
@@ -80,12 +81,12 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.4rem;
 }
 
 .favorites-item-card {
   display: flex;
-  gap: 1rem;
+  gap: 1.5rem;
   background-color: #fff;
   border: 1px solid #ddd;
   border-radius: 8px;

@@ -21,6 +21,11 @@
   text-align: center;
 }
 
+.modal-content p {
+  font-size: 0.9rem;
+  line-height: 1.8; 
+}
+
 .modal-close {
   position: absolute;
   top: 8px;
