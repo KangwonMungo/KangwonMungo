@@ -1,11 +1,9 @@
-import { useState , useRef, useEffect} from "react";
+import { useState , useRef, useEffect } from "react";
 import axios from "axios";
 import ChatMessage from "../components/ChatMessage";
 import ChatInput from "../components/ChatInput";
 import "./BookRecommender.css";
-// import { Message } from "../App";
 import { Message } from "../../types";
-
 
 interface BookRecommenderProps {
   messages: Message[];
@@ -22,45 +20,57 @@ export default function BookRecommender({
   const handleSend = async () => {
     if (!input.trim()) return;
 
+    //  유저 메시지
     const userMessage: Message = { sender: "user", text: input };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
 
     try {
-      const res = await axios.post(
-        "http://localhost:8000/api/recommend",
-        {
-          question: input,
-        });
+      // conversations 호출
+      const res = await axios.post("http://localhost:8000/api/conversations", {
+        question: input,
+      });
 
-        let botMessage
+      const generatedResponse = res.data[0]?.title; // generated_response
+      const searchTrigger = res.data[0]?.author;    // search_trigger (true/false로 들어옴 → 문자열일 경우 true 처리 필요)
 
-        const data = res.data;
+      // bot 메시지 (일단 추천 여부 상관없이)
+      const botMessage: Message = { sender: "bot", text: generatedResponse };
+      setMessages((prev) => [...prev, botMessage]);
 
-        if (Array.isArray(data) && data[0]?.title && data[0]?.isbn) {
-          const bookList = data.map((book, idx) => `${idx + 1}.${book.title}`).join("\n");
-          const text = `‘${input}’에 대해 이런 책을 추천합니다:\n${bookList}`
-          botMessage = { sender: "bot", text , bookList: data};
-        } else {
-          // 단순 LLM 응답
-          botMessage = { sender: "bot", text: data[0]?.title || "추천 결과 없음" };
-        }
+      // search_trigger === true 면 recommendations 호출
+      if (searchTrigger === true || searchTrigger === "true") {
+        const recRes = await axios.get("http://localhost:8000/api/recommendations");
 
-        setMessages((prev) => [...prev, botMessage]);
-      } catch (err) {
-        console.error("API 호출 오류:", err);
-        setMessages((prev) => [
+        const bookList = recRes.data;
+        const bookListText = bookList
+          .map((book: any, idx: number) => `${idx + 1}. ${book.title}`)
+          .join("\n");
+
+        const recommendationMessage: Message = {
+          sender: "bot",
+          text: `‘${input}’에 대해 이런 책을 추천합니다:\n${bookListText}`,
+          bookList,
+        };
+
+        // 추천 결과 메시지
+        setMessages((prev) => [...prev, recommendationMessage]);
+      }
+
+    } catch (err) {
+      console.error("API 호출 오류:", err);
+      setMessages((prev) => [
         ...prev,
         {
           sender: "bot",
-          text: "추천 오류"
+          text: "추천 오류",
         },
       ]);
     }
   };
 
   useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: "smooth"});
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   return (
@@ -68,8 +78,12 @@ export default function BookRecommender({
       <div className="chat-panel">
         <div className="chat-content">
           {messages.map((msg, idx) => (
-
-            <ChatMessage key={idx} sender={msg.sender} text={msg.text} bookList={msg.bookList}/>
+            <ChatMessage
+              key={idx}
+              sender={msg.sender}
+              text={msg.text}
+              bookList={msg.bookList}
+            />
           ))}
           <div ref={scrollRef} />
         </div>
@@ -83,4 +97,3 @@ export default function BookRecommender({
     </div>
   );
 }
-
