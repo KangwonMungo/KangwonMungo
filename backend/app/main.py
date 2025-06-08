@@ -67,15 +67,20 @@ def read_root():
     return {"message": "FastAPI 백엔드가 정상적으로 작동합니다!"}
 
 
-@app.post("/api/recommend")
-async def recommend(request: Request):
+@app.post("/api/conversations")
+async def chat(request: Request):
     body = await request.json()
     question = body.get("question", "")
-    
     
     #List[dict] 반환
     return query_to_answer(question)
     
+
+@app.get("/api/recommendations")
+def recommend():
+    recommendation_response = get_book_recommendations()
+    return recommendation_response
+
 # 관심 도서 추가
 @app.post("/api/favorites")
 def add_favorite(book: Book):
@@ -98,56 +103,43 @@ def remove_favorite(title: str = Query(...)):
 # 추천된 책들의 ISBN을 저장
 isbns = [] 
 
+def get_book_recommendations() -> List[dict]:
+    """책 추천 검색 및 최종 추천 응답 생성 로직"""
+    global isbns, conversation_history
+
+    print("search_trigger 활성화, 검색 쿼리 생성 시작")
+    search_query = conversation_service.generate_search_query(conversation_history)
+    print(f"생성된 검색 쿼리: {search_query}")
+
+    retrieved_books = vector_store.retrieve_chroma(collections, search_query, num=NUM, exclude_isbns=isbns)
+    retrieved_books = retrieved_books[:NUM]
+
+    recommendation_response = conversation_service.get_recommendation(retrieved_books, search_query)
+    print(f"최종 recommendation_response 생성: {recommendation_response}")
+
+    # 추천된 책들의 ISBN 업데이트
+    for book in recommendation_response:
+        isbn = book.get("isbn", "")
+        if isbn and isbn not in isbns:
+            isbns.append(isbn)
+
+    return recommendation_response
+
 def query_to_answer(query: str) -> List[dict]:
+    global conversation_history
+
+    conversation_history['favorites'] = list(set(book.genre for book in favorites if book.genre))
+    print(f"키워드 추출 전: {conversation_history}")
     book_preference_info = conversation_service.get_keywords_from_llm(query, conversation_history) 
 
-   
-
-
-    # "keywords": [],
-    # "mood": [],
-    # "genre": [],
-    # "theme": [],
-    # "search_trigger": false,
-    # "generated_response": ""
-    for book in favorites:
-        if book.genre:
-            book_preference_info["genre"].append(book.genre)
-
+    conversation_history = book_preference_info
+    print(f"키워드 추출 후: {conversation_history}")
     
-    if book_preference_info["search_trigger"]:
-            print("search_trigger 활성화, 검색 쿼리 생성 시작")
-            search_query = conversation_service.generate_search_query(book_preference_info)
-            print(f"생성된 검색 쿼리 {search_query}")
-            retrieved_books = vector_store.retrieve_chroma(collections, search_query, num=NUM, exclude_isbns=isbns)
-            
-            retrieved_books= retrieved_books[:NUM]
-            
-
-#             [{
-#     "title": "어린 왕자",
-#     "author": "앙투안 드 생텍쥐페리",
-#     "summary": "사막에 불시착한 조종사가 만난 어린 왕자와의 철학적인 이야기...",
-#     "recommendation": "순수함과 인생에 대한 통찰을 동시에 느낄 수 있는 작품입니다.",
-#     "isbn": "9788952759600",
-#     "image": "url",
-#   },]
-            recommendation_response = conversation_service.get_recommendation(retrieved_books, search_query)
-            print(f"최종 recommendation_response 생성 {recommendation_response}")
-            for book in recommendation_response:
-                isbn = book.get("isbn", "")
-                isbns.append(isbn)
-           
-
-            return recommendation_response
-    else:
-        print("search_trigger' 비활성화, LLM 응답만 반환")
-        print(book_preference_info.get("generated_response", "generated_response 없음"))
+    print(book_preference_info.get("generated_response", "generated_response 없음"))
 
     return [{
-
         "title": book_preference_info["generated_response"],
-        "author": "",
+        "author": book_preference_info["search_trigger"],
         "summary": "",
         "recommendation": "",
         "isbn": "",
