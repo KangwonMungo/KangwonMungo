@@ -23,11 +23,13 @@ export default function BookRecommendationItem({ book }: Props) {
       title: book.title,
       author: book.author,
       isbn: book.isbn,
+      image: book.image,
+      recommendation: book.recommendation,
+      summary : book.summary,
       genre: "",
-      image_url: book.image,
       introduction: book.summary,
       keyword: [],
-      recommendation: book.recommendation,
+      
   });
 };
 

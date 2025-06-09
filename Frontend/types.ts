@@ -3,22 +3,15 @@
 export interface Book {
   title: string;
   author: string;
-  summary: string;
-  recommendation: string;
   isbn: string;
   image: string;
+  recommendation: string;
+  summary: string;
+  genre?: string;              // optional
+  introduction?: string;       // optional
+  keyword?: string[]; 
 }
 
-export interface FavoriteBook {
-  title: string;
-  author: string;
-  isbn: string;
-  genre: string;
-  image_url: string;
-  introduction: string;
-  keyword: string[];
-  recommendation: string;
-}
 
 export interface Message {
   sender: "user" | "bot";

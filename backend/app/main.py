@@ -55,7 +55,7 @@ class Book(BaseModel):
     keyword: List[str]
     isbn: str
     genre: str
-    image_url: str
+    image: str
     introduction: str
 
 # 임시 저장소
@@ -84,9 +84,11 @@ def recommend():
 # 관심 도서 추가
 @app.post("/api/favorites")
 def add_favorite(book: Book):
+    print("📥 받은 book:", book)
     if book not in favorites:
         favorites.append(book)
     return {"favorites": favorites}
+
 
 # 관심 도서 조회
 @app.get("/api/favorites")
@@ -135,7 +137,12 @@ def query_to_answer(query: str) -> List[dict]:
     conversation_history = book_preference_info
     print(f"키워드 추출 후: {conversation_history}")
     
+
+    recommendation_response = get_book_recommendations()
+
     print(book_preference_info.get("generated_response", "generated_response 없음"))
+
+    first_image = recommendation_response[0]["image"] if recommendation_response and "image" in recommendation_response[0] else ""
 
     return [{
         "title": book_preference_info["generated_response"],
@@ -143,5 +150,12 @@ def query_to_answer(query: str) -> List[dict]:
         "summary": "",
         "recommendation": "",
         "isbn": "",
-        "image": "",
+        "image": first_image,
     }]
+
+
+@app.delete("/api/favorites/clear")
+def clear_favorites():
+    global favorites
+    favorites = []
+    return {"favorites": favorites}

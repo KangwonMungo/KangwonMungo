@@ -1,11 +1,11 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import axios from "axios";
-import {FavoriteBook} from "../../types";
+import {Book} from "../../types";
 
 // context 타입
 interface FavoriteContextType {
-  favorites: FavoriteBook[];
-  addFavorite: (book: FavoriteBook) => void;
+  favorites: Book[];
+  addFavorite: (book: Book) => void;
   removeFavorite: (title: string) => void;
   isFavorite: (title: string) => boolean;
 }
@@ -13,7 +13,7 @@ interface FavoriteContextType {
 const FavoriteContext = createContext<FavoriteContextType | undefined>(undefined);
 
 export function FavoriteProvider({ children }: { children: ReactNode }) {
-  const [favorites, setFavorites] = useState<FavoriteBook[]>([]);
+  const [favorites, setFavorites] = useState<Book[]>([]);
 
   //  서버에서 최초 목록 불러오기
   useEffect(() => {
@@ -27,15 +27,28 @@ export function FavoriteProvider({ children }: { children: ReactNode }) {
       .catch((err) => console.error("관심 도서 불러오기 실패", err));
   }, []);
 
-  //  서버에 관심 도서 추가
-  const addFavorite = async (book: FavoriteBook) => {
-    try {
-      const res = await axios.post("http://localhost:8000/api/favorites", book);
-      setFavorites(res.data.favorites);
-    } catch (err) {
-      console.error("관심 도서 추가 실패", err);
-    }
-  };
+// 서버에 관심 도서 추가
+const addFavorite = async (book: Book) => {
+  try {
+    const payload = {
+      title: book.title,
+      author: book.author,
+      isbn: book.isbn ?? "",
+      genre: book.genre ?? "",
+      image: book.image ?? "",
+      introduction: book.introduction ?? "",
+      keyword: Array.isArray(book.keyword) ? book.keyword : [],
+    };
+
+    console.log("📦 보내는 payload:", payload);  // 여기 추가!
+
+    const res = await axios.post("http://localhost:8000/api/favorites", payload);
+    setFavorites(res.data.favorites);
+  } catch (err) {
+    console.error("관심 도서 추가 실패", err);
+  }
+};
+
 
   //  서버에서 삭제
   const removeFavorite = async (title: string) => {

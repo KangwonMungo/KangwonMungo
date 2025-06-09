@@ -1,14 +1,7 @@
 import "./ChatMessage.css"
 import BookRecommendationItem from "./BookRecommendationItem";
+import { Book } from "../../types"
 
-interface Book {
-  title: string;
-  author: string;
-  summary: string;
-  recommendation: string;
-  isbn: string;
-  image: string;
-}
 
 interface Props {
   sender: "user" | "bot";
@@ -29,15 +22,18 @@ export default function ChatMessage({ sender, text, bookList }: Props) {
               <div style={{ marginBottom: "0.5rem" }}>{text}</div>
 
 
-              {isRecommendation &&
-              bookList!.map((book, idx) => (
-              <BookRecommendationItem key={idx} book={book} />
-            ))}
+              {isRecommendation && (
+                <>
+                  {bookList!.map((book, idx) => (
+                    <BookRecommendationItem key={idx} book={book} />
+                  ))}
+                </>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
   // 일반 메시지 출력
   return (

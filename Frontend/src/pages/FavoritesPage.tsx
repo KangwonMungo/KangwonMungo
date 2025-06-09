@@ -17,7 +17,7 @@ export default function FavoritesPage() {
           <div className="favorites-list">
             {favorites.map((book, idx) => (
               <div key={idx} className="favorites-item-card">
-                <img src={book.image_url} alt={book.title} className="favorites-book-image" />
+                <img src={book.image} alt={book.title} className="favorites-book-image" />
 
                 <div className="favorites-book-details">
                   <h3>{book.title}</h3>
