@@ -1,12 +1,19 @@
 import { useState } from "react";
 import { useFavorites } from "../context/FavoriteContext";
 import "./BookRecommendationItem.css";
-import BookDetailModal from "./BookDetailModal"
-import { Book } from "../../types"
-
+import BookDetailModal from "./BookDetailModal";
+import { Book } from "../../types";
 
 interface Props {
-  book: Book;
+  book: {
+    title: string;
+    author: string;
+    summary: string;
+    recommendation: string;
+    isbn: string;
+    image: string;
+    genre: string;
+  };
 }
 
 export default function BookRecommendationItem({ book }: Props) {
@@ -17,19 +24,19 @@ export default function BookRecommendationItem({ book }: Props) {
   const [showModal, setShowModal] = useState(false); // Modal
 
   const toggleLike = () => {
-  liked 
-    ? removeFavorite(book.title) 
-    : addFavorite({
-      title: book.title,
-      author: book.author,
-      isbn: book.isbn,
-      genre: "",
-      image_url: book.image,
-      introduction: book.summary,
-      keyword: [],
-      recommendation: book.recommendation,
-  });
-};
+    liked
+      ? removeFavorite(book.title)
+      : addFavorite({
+          title: book.title,
+          author: book.author,
+          isbn: book.isbn,
+          genre: "",
+          image_url: book.image,
+          introduction: book.summary,
+          keyword: [],
+          recommendation: book.recommendation,
+        });
+  };
 
   return (
     <div className="book-item">

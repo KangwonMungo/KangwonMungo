@@ -1,4 +1,4 @@
-import { useState , useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import ChatMessage from "../components/ChatMessage";
 import ChatInput from "../components/ChatInput";
@@ -31,8 +31,8 @@ export default function BookRecommender({
         question: input,
       });
 
-      const generatedResponse = res.data[0]?.title; // generated_response
-      const searchTrigger = res.data[0]?.author;    // search_trigger (true/false로 들어옴 → 문자열일 경우 true 처리 필요)
+      const generatedResponse = res.data.generated_response; // generated_response
+      const searchTrigger = res.data.search_trigger; // search_trigger (true/false로 들어옴 → 문자열일 경우 true 처리 필요)
 
       // bot 메시지 (일단 추천 여부 상관없이)
       const botMessage: Message = { sender: "bot", text: generatedResponse };
@@ -40,7 +40,9 @@ export default function BookRecommender({
 
       // search_trigger === true 면 recommendations 호출
       if (searchTrigger === true || searchTrigger === "true") {
-        const recRes = await axios.get("http://localhost:8000/api/recommendations");
+        const recRes = await axios.get(
+          "http://localhost:8000/api/recommendations"
+        );
 
         const bookList = recRes.data;
         const bookListText = bookList
@@ -56,7 +58,6 @@ export default function BookRecommender({
         // 추천 결과 메시지
         setMessages((prev) => [...prev, recommendationMessage]);
       }
-
     } catch (err) {
       console.error("API 호출 오류:", err);
       setMessages((prev) => [

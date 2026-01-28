@@ -125,7 +125,7 @@ def get_book_recommendations() -> List[dict]:
 
     return recommendation_response
 
-def query_to_answer(query: str) -> List[dict]:
+def query_to_answer(query: str) -> dict:
     global conversation_history
 
     conversation_history['favorites'] = list(set(book.genre for book in favorites if book.genre))
@@ -137,11 +137,7 @@ def query_to_answer(query: str) -> List[dict]:
     
     print(book_preference_info.get("generated_response", "generated_response 없음"))
 
-    return [{
+    return {
         "title": book_preference_info["generated_response"],
         "author": book_preference_info["search_trigger"],
-        "summary": "",
-        "recommendation": "",
-        "isbn": "",
-        "image": "",
-    }]
+    }

@@ -1,21 +1,11 @@
-## 실행 방법
+![..](images/ww.png)
 
-```bash
-# 패키지 설치
-npm install
-pip install axios fastapi pydantic
+## Overview
 
-# 로컬 서버 실행
-cd KANGWONMUNGO/Frontend
-npm run dev
+This project is a personalized book recommendation system utilizing a RAG (Retrieval-Augmented Generation) based LLM (Large Language Model). It addresses the limitations of existing rating and purchase-history based systems and the lack of up-to-date information by providing users with clear recommendation rationales and a customized reading experience that reflects their preferences and interests.
 
-# 백엔드 서버 실행
-uvicorn backend.app.main:app --reload
+## Tech Stack
 
-# chroma db 설명
-- chroma db 폴더에 chroma.sqlite3만 있을 경우, chroma db 폴더를 삭제한 뒤 main.py를 실행하여 다시 생성
-- chroma db 폴더에 .bin 폴더들이 있어야, 도서 검색 가능합니다
-
-# 서버 중단
-ctrl + c
-```
+- Frontend: FastAPI, Gemini (gemini-2.0-flash)
+- Backend: React, TypeScript, Axios
+- Database: ChromaDB (Vector DB)
